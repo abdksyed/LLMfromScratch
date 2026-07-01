@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>4 · Memorization vs Generalization</title>
+  <link rel="stylesheet" href="../shared/styles.css">
+</head>
+<body>
+  <main>
+    <div class="topbar">
+      <a class="badge" href="../">Baby Neurons</a>
+      <span class="badge">Memorization vs generalization</span>
+    </div>
+
+    <section class="intro">
+      <div>
+        <h1>Tiny data memorizes. More data generalizes.</h1>
+        <p class="claim">
+          A high-capacity model can drive train loss near zero on 20 examples while
+          held-out loss stays high. Give it 200 or 2000 examples from the same noisy
+          rule and the train/test gap shrinks. Data closes the gap.
+        </p>
+      </div>
+
+      <div class="controls">
+        <div class="control-row">
+          <div>
+            <label for="epochs">Training epochs: <strong id="epochLabel">280</strong></label>
+            <input id="epochs" type="range" min="60" max="500" value="280" step="20">
+          </div>
+          <div class="button-row">
+            <button id="reset" type="button">Reset</button>
+            <button id="train" type="button">Train all</button>
+          </div>
+        </div>
+        <p id="status" class="status">Ready</p>
+      </div>
+    </section>
+
+    <section class="embedding-layout" aria-label="Generalization gap charts">
+      <article class="plot-card">
+        <div class="plot-header">
+          <div>
+            <h2>Generalization gap</h2>
+            <p>Test loss minus train loss after training.</p>
+          </div>
+          <div class="metric">
+            worst gap
+            <strong id="worstGap">--</strong>
+          </div>
+        </div>
+        <canvas id="gapCanvas" width="760" height="620"></canvas>
+      </article>
+
+      <article class="plot-card">
+        <div class="plot-header">
+          <div>
+            <h2>Loss table</h2>
+            <p>Same model capacity, different dataset sizes.</p>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Train size</th>
+                <th>Train loss</th>
+                <th>Test loss</th>
+                <th>Gap</th>
+              </tr>
+            </thead>
+            <tbody id="resultBody"></tbody>
+          </table>
+        </div>
+      </article>
+    </section>
+
+    <section class="proof-panel" aria-label="Dataset explanation">
+      <div>
+        <span class="task-kicker">Setup</span>
+        <h2>One noisy rule, three data budgets.</h2>
+        <p>
+          The classifier sees 2D points from a nonlinear target with label noise.
+          The feature map is intentionally high capacity, so 20 examples are easy
+          to memorize but not enough to pin down the real rule.
+        </p>
+      </div>
+      <pre class="matrix-proof matrix-proof-large" id="setupText"></pre>
+    </section>
+  </main>
+
+  <script type="module" src="./app.js"></script>
+</body>
+</html>

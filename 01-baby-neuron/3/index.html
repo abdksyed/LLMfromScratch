@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>3 · Embeddings Learn Similarity</title>
+  <link rel="stylesheet" href="../shared/styles.css">
+</head>
+<body>
+  <main>
+    <div class="topbar">
+      <a class="badge" href="../">Baby Neurons</a>
+      <span class="badge">Next-token training, no similarity labels</span>
+    </div>
+
+    <section class="intro">
+      <div>
+        <h1>Embeddings learn similarity from prediction alone.</h1>
+        <p class="claim">
+          The model only sees one job: given a token, predict the next token in a
+          tiny grammar. No category labels or similarity scores are supplied. Tokens
+          with similar next-token distributions still move together in embedding space.
+        </p>
+        <div class="legend" aria-label="Token category legend">
+          <span class="key"><span class="dot blue"></span>Animals</span>
+          <span class="key"><span class="dot red"></span>Fruits</span>
+          <span class="key"><span class="dot green"></span>Verbs</span>
+        </div>
+      </div>
+
+      <div class="controls">
+        <div class="control-row">
+          <div>
+            <label for="epochs">Training epochs: <strong id="epochLabel">900</strong></label>
+            <input id="epochs" type="range" min="100" max="1800" value="900" step="100">
+          </div>
+          <div class="button-row">
+            <button id="reset" type="button">Reset</button>
+            <button id="train" type="button">Train</button>
+          </div>
+        </div>
+        <p id="status" class="status">Ready</p>
+      </div>
+    </section>
+
+    <section class="embedding-layout" aria-label="Embedding proof">
+      <article class="plot-card">
+        <div class="plot-header">
+          <div>
+            <h2>Learned embedding map</h2>
+            <p>2D projection of the trained embedding table.</p>
+          </div>
+          <div class="metric">
+            loss
+            <strong id="lossValue">--</strong>
+          </div>
+        </div>
+        <canvas id="embeddingCanvas" width="760" height="620"></canvas>
+      </article>
+
+      <article class="plot-card">
+        <div class="plot-header">
+          <div>
+            <h2>Nearest neighbors</h2>
+            <p>Cosine similarity inside the embedding table.</p>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Token</th>
+                <th>Category</th>
+                <th>Closest token</th>
+              </tr>
+            </thead>
+            <tbody id="neighborsBody"></tbody>
+          </table>
+        </div>
+      </article>
+    </section>
+
+    <section class="proof-panel" aria-label="Synthetic grammar">
+      <div>
+        <span class="task-kicker">Toy grammar</span>
+        <h2>Same category, same prediction problem.</h2>
+        <p>
+          Cat, dog, and cow appear in the same grammar slots. Apple and mango share
+          slots. Eat, chase, and see share slots. That makes same-category tokens
+          produce similar next-token targets.
+        </p>
+      </div>
+      <pre class="matrix-proof matrix-proof-large" id="grammarText"></pre>
+    </section>
+  </main>
+
+  <script type="module" src="./app.js"></script>
+</body>
+</html>

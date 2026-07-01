@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Baby Neurons</title>
+  <link rel="stylesheet" href="./shared/styles.css">
+</head>
+<body>
+  <main>
+    <div class="topbar">
+      <span class="badge">Baby Neurons</span>
+      <span class="badge">Four tiny neural-net experiments</span>
+    </div>
+
+    <section class="intro hub-intro">
+      <div>
+        <h1>Small models, visible boundaries.</h1>
+        <p class="claim">
+          A compact set of browser demos for the first neural-network instincts:
+          what activations change, why depth needs nonlinearity, how embeddings
+          discover similarity, and why more data closes the generalization gap.
+        </p>
+      </div>
+    </section>
+
+    <section class="task-grid" aria-label="Baby Neurons tasks">
+      <a class="task-tile" href="./1/">
+        <span class="task-kicker">1</span>
+        <h2>One activation turns a line into a ring.</h2>
+        <p>Compare one linear layer against one ReLU hidden layer on the ring task.</p>
+      </a>
+
+      <a class="task-tile" href="./2/">
+        <span class="task-kicker">2</span>
+        <h2>Depth without nonlinearity is a lie.</h2>
+        <p>Stack five linear layers, collapse them to one map, then add ReLUs.</p>
+      </a>
+
+      <a class="task-tile" href="./3/">
+        <span class="task-kicker">3</span>
+        <h2>Embeddings learn similarity from next-token.</h2>
+        <p>Train on a toy grammar and watch related tokens cluster in embedding space.</p>
+      </a>
+
+      <a class="task-tile" href="./4/">
+        <span class="task-kicker">4</span>
+        <h2>Data closes the generalization gap.</h2>
+        <p>Watch a high-capacity model memorize tiny data and improve as train data grows.</p>
+      </a>
+    </section>
+  </main>
+</body>
+</html>

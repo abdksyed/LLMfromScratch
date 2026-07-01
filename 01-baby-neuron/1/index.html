@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>1 · Why ReLU Matters</title>
+  <link rel="stylesheet" href="../shared/styles.css">
+</head>
+<body>
+  <main>
+    <div class="topbar">
+      <a class="badge" href="../">Baby Neurons</a>
+      <span class="badge">2D rings, trained in your browser</span>
+    </div>
+
+    <section class="intro">
+      <div>
+        <h1>One activation turns a line into a ring.</h1>
+        <p class="claim">
+          A model with no nonlinearity can only draw a straight boundary. On two noisy
+          concentric rings, that boundary gets stuck. Add one ReLU hidden layer and
+          the model can bend its boundary around the inner class.
+        </p>
+        <div class="legend" aria-label="Class legend">
+          <span class="key"><span class="dot blue"></span>Inner ring: class 0</span>
+          <span class="key"><span class="dot red"></span>Outer ring: class 1</span>
+        </div>
+      </div>
+
+      <div class="controls">
+        <div class="control-row">
+          <div>
+            <label for="epochs">Training epochs: <strong id="epochLabel">700</strong></label>
+            <input id="epochs" type="range" min="100" max="1500" value="700" step="100">
+          </div>
+          <div class="button-row">
+            <button id="rerun" type="button">Regenerate</button>
+            <button id="train" type="button">Train</button>
+          </div>
+        </div>
+        <p id="status" class="status">Ready</p>
+      </div>
+    </section>
+
+    <section class="plots" aria-label="Decision boundary plots">
+      <article class="plot-card">
+        <div class="plot-header">
+          <div>
+            <h2>Linear layer + sigmoid</h2>
+            <p>One weighted sum, then probability.</p>
+          </div>
+          <div class="metric">
+            accuracy
+            <strong id="linearAccuracy">--</strong>
+          </div>
+        </div>
+        <canvas id="linearCanvas" width="620" height="620"></canvas>
+      </article>
+
+      <article class="plot-card">
+        <div class="plot-header">
+          <div>
+            <h2>ReLU hidden layer + sigmoid</h2>
+            <p>Sixteen small ReLU neurons before the output.</p>
+          </div>
+          <div class="metric">
+            accuracy
+            <strong id="reluAccuracy">--</strong>
+          </div>
+        </div>
+        <canvas id="reluCanvas" width="620" height="620"></canvas>
+      </article>
+    </section>
+
+    <section class="notes" aria-label="Short explanation">
+      <div class="note">
+        <h3>Dataset</h3>
+        <p>About 300 points are sampled from two noisy rings. No straight line can put one whole ring on each side.</p>
+      </div>
+      <div class="note">
+        <h3>Linear model</h3>
+        <p>The formula is sigmoid(w*x + b). Its decision boundary is where w*x + b = 0, which is always a line.</p>
+      </div>
+      <div class="note">
+        <h3>ReLU layer</h3>
+        <p>ReLU creates simple bends. Several ReLUs together form a flexible piecewise-linear boundary around the ring.</p>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
