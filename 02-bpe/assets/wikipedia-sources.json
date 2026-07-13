@@ -1,0 +1,56 @@
+{
+  "pages": [
+    {
+      "code": "en",
+      "file": "wikiepedia-en.txt",
+      "requested_title": "India",
+      "resolved_title": "India",
+      "page_id": 14533,
+      "revision_id": 1362789340,
+      "revision_timestamp": "2026-07-06T05:24:36Z",
+      "retrieved_at": "2026-07-10T23:19:27.738803+00:00",
+      "source_url": "https://en.wikipedia.org/wiki/India",
+      "acquisition": "MediaWiki API: prop=extracts|revisions, explaintext=1, redirects=1",
+      "cleaning": "API plaintext extraction; whitespace split only; case and punctuation retained"
+    },
+    {
+      "code": "hi",
+      "file": "wikiepedia-hi.txt",
+      "requested_title": "भारत",
+      "resolved_title": "भारत",
+      "page_id": 59,
+      "revision_id": 6579409,
+      "revision_timestamp": "2026-07-06T14:04:22Z",
+      "retrieved_at": "2026-07-10T23:19:27.738803+00:00",
+      "source_url": "https://hi.wikipedia.org/wiki/भारत",
+      "acquisition": "MediaWiki API: prop=extracts|revisions, explaintext=1, redirects=1",
+      "cleaning": "API plaintext extraction; whitespace split only; case and punctuation retained"
+    },
+    {
+      "code": "te",
+      "file": "wikiepedia-te.txt",
+      "requested_title": "భారతదేశం",
+      "resolved_title": "భారతదేశం",
+      "page_id": 1294,
+      "revision_id": 4848340,
+      "revision_timestamp": "2026-05-29T11:32:49Z",
+      "retrieved_at": "2026-07-10T23:19:27.738803+00:00",
+      "source_url": "https://te.wikipedia.org/wiki/భారతదేశం",
+      "acquisition": "MediaWiki API: prop=extracts|revisions, explaintext=1, redirects=1",
+      "cleaning": "API plaintext extraction; whitespace split only; case and punctuation retained"
+    },
+    {
+      "code": "kn",
+      "file": "wikiepedia-kn.txt",
+      "requested_title": "ಭಾರತ",
+      "resolved_title": "ಭಾರತ",
+      "page_id": 803,
+      "revision_id": 1373694,
+      "revision_timestamp": "2026-05-18T16:06:17Z",
+      "retrieved_at": "2026-07-10T23:19:27.738803+00:00",
+      "source_url": "https://kn.wikipedia.org/wiki/ಭಾರತ",
+      "acquisition": "MediaWiki API: prop=extracts|revisions, explaintext=1, redirects=1",
+      "cleaning": "API plaintext extraction; whitespace split only; case and punctuation retained"
+    }
+  ]
+}

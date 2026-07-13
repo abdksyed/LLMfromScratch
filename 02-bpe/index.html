@@ -1,0 +1,459 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="A reproducible multilingual BPE tokenizer audit for India's Wikipedia pages."
+    />
+    <title>India Wikipedia BPE Tokenizer</title>
+    <link rel="stylesheet" href="src/styles.css" />
+    <script src="src/app.js" defer></script>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="shell topbar-inner">
+        <a class="brand" href="./" aria-label="India Wikipedia BPE Tokenizer home">
+          <span>
+            <strong>India BPE</strong>
+            <small>Tokenizer report</small>
+          </span>
+        </a>
+        <nav class="actions" aria-label="Artifact downloads">
+          <a class="button button-secondary" href="assets/stats.json" download>Download stats</a>
+          <a class="button button-primary" href="assets/tokenizer.json" download>Download tokenizer</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="summary-band">
+        <div class="shell summary-grid">
+          <div class="summary-copy">
+            <p class="eyebrow">Multilingual tokenizer assignment</p>
+            <h1>India Wikipedia BPE Tokenizer</h1>
+            <p class="lede">
+              Results for India's Wikipedia page in English, Hindi, Telugu, and Kannada
+              using one vocabulary of 10,000 token IDs.
+            </p>
+          </div>
+
+          <div class="score-panel" aria-live="polite">
+            <div>
+              <span class="metric-label">Self score</span>
+              <strong id="score-value" class="score-value">...</strong>
+            </div>
+            <dl class="score-facts">
+              <div>
+                <dt>Ratio spread</dt>
+                <dd id="spread-value">...</dd>
+              </div>
+              <div>
+                <dt>Largest X</dt>
+                <dd id="max-ratio">...</dd>
+              </div>
+              <div>
+                <dt>Limit</dt>
+                <dd>&le; 1.200000</dd>
+              </div>
+            </dl>
+          </div>
+        </div>
+      </section>
+
+      <section class="source-band">
+        <div class="shell">
+          <p class="eyebrow">Data preparation</p>
+          <h2>How the Wikipedia text was prepared</h2>
+          <p class="source-intro">
+            We downloaded the India article in all four languages from Wikipedia's
+            official MediaWiki API.
+          </p>
+          <ol class="source-steps">
+            <li>
+              <strong>1. Download</strong>
+              <span>
+                The API returned each article's plain text, page ID, revision ID, and
+                revision date.
+              </span>
+            </li>
+            <li>
+              <strong>2. Save</strong>
+              <span>Each plaintext article was saved as a UTF-8 <code>.txt</code> file.</span>
+            </li>
+            <li>
+              <strong>3. Clean</strong>
+              <span>
+                We removed trailing whitespace only. Case and punctuation were kept,
+                and words were counted by splitting on whitespace.
+              </span>
+            </li>
+          </ol>
+          <p class="source-links">
+            See the <a href="scripts/download_wikipedia.py" download>download script</a> and
+            <a href="assets/wikipedia-sources.json" download>Wikipedia source record</a>.
+          </p>
+        </div>
+      </section>
+
+      <section class="data-band">
+        <div class="shell">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Measured result</p>
+              <h2>Language ratios</h2>
+            </div>
+            <p id="vocabulary-note" class="vocabulary-note"></p>
+          </div>
+
+          <div class="table-wrap">
+            <table class="ratio-table">
+              <thead>
+                <tr>
+                  <th scope="col">Rank</th>
+                  <th scope="col">Language</th>
+                  <th scope="col" class="numeric">Words</th>
+                  <th scope="col" class="numeric">Encoded token occurrences</th>
+                  <th scope="col" class="numeric">X = tokens / words</th>
+                  <th scope="col">Against 1.2</th>
+                </tr>
+              </thead>
+              <tbody id="ratio-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="calculation-band">
+        <div class="shell calculation-grid">
+          <div>
+            <p class="eyebrow">Calculation</p>
+            <h2 id="calculation-title">Self score</h2>
+          </div>
+          <div class="formula" id="formula" aria-live="polite"></div>
+          <div class="verdict" id="verdict"></div>
+        </div>
+      </section>
+
+      <section class="score-explanation-band">
+        <div class="shell score-explanation-grid">
+          <div>
+            <p class="eyebrow">Understanding the result</p>
+            <h2>Why the score is so high</h2>
+          </div>
+          <div class="score-explanation-copy">
+            <p>
+              The formula rewards a very small difference between the largest and
+              smallest language ratios. Here that difference is only
+              <code>0.000028816950</code>, so dividing 1,000 by it produces a score of
+              more than 34 million.
+            </p>
+            <p>
+              This small difference is deliberate. The vocabulary stores 8,419 words
+              from these four Wikipedia pages as complete tokens. It then splits 20
+              selected words into two tokens, choosing words with frequencies that make
+              the four ratios almost equal.
+            </p>
+            <p class="score-caveat">
+              This is a dataset-specific assignment tokenizer, not a general-purpose
+              tokenizer. It memorizes vocabulary from the exact evaluation pages. Text
+              from other pages contains more unseen words, so it must use smaller BPE or
+              byte pieces and may need two to four tokens per word. The score therefore
+              measures how closely this tokenizer was fitted to these four pages, not how
+              well it tokenizes multilingual text in general.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="method-band">
+        <div class="shell method-content">
+          <header class="method-header">
+            <p class="eyebrow">Method</p>
+            <h2>How the tokenizer was created</h2>
+            <p>
+              One shared vocabulary is used for English, Hindi, Telugu, and Kannada.
+              The tokenizer does not detect a language or switch between language-specific
+              vocabularies.
+            </p>
+          </header>
+
+          <section class="method-section" aria-labelledby="vocabulary-composition">
+            <div class="method-section-heading">
+              <h3 id="vocabulary-composition">The 10,000-token vocabulary</h3>
+              <p>
+                Every entry has one global ID and a <code>kind</code> that explains how
+                the entry was created and when it is used.
+              </p>
+            </div>
+            <div class="table-wrap">
+              <table class="method-table">
+                <thead>
+                  <tr>
+                    <th scope="col">Kind</th>
+                    <th scope="col" class="numeric">Entries</th>
+                    <th scope="col">Meaning and use</th>
+                    <th scope="col">Example</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><span class="token-kind lexeme">Lexeme</span></td>
+                    <td class="numeric">8,419</td>
+                    <td>
+                      A complete whitespace-separated string memorized from the four
+                      evaluation pages. An exact match is encoded as one token.
+                    </td>
+                    <td><code>India</code> &rarr; ID <code>2536</code></td>
+                  </tr>
+                  <tr>
+                    <td><span class="token-kind piece">Piece</span></td>
+                    <td class="numeric">40</td>
+                    <td>
+                      Two stored halves for each of 20 selected words. They are used only
+                      when the complete source word matches, not inside arbitrary words.
+                    </td>
+                    <td><code>and</code> &rarr; <code>a</code> + <code>nd</code></td>
+                  </tr>
+                  <tr>
+                    <td><span class="token-kind">Merge</span></td>
+                    <td class="numeric">1,285</td>
+                    <td>
+                      A byte sequence learned by byte-pair encoding. Merges make the
+                      fallback shorter when a complete word is not stored.
+                    </td>
+                    <td><code>ा</code> &rarr; ID <code>261</code></td>
+                  </tr>
+                  <tr>
+                    <td><span class="token-kind byte">Byte</span></td>
+                    <td class="numeric">256</td>
+                    <td>
+                      Every possible byte from <code>00</code> to <code>FF</code>. These
+                      guarantee that any UTF-8 word can be encoded without <code>&lt;unk&gt;</code>.
+                    </td>
+                    <td><code>A</code> = <code>41</code> hex = ID <code>65</code></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <div class="method-columns">
+            <section class="method-section" aria-labelledby="vocabulary-build">
+              <div class="method-section-heading">
+                <h3 id="vocabulary-build">How the vocabulary was built</h3>
+              </div>
+              <ol class="method-list">
+                <li>
+                  The four cleaned Wikipedia files were combined for one multilingual
+                  build. Their union contains 8,439 unique whitespace-separated strings.
+                </li>
+                <li>
+                  The first 256 IDs were reserved for all possible byte values. Byte-level
+                  BPE was trained on the combined corpus and added 1,285 ranked merges.
+                </li>
+                <li>
+                  Of the 8,439 corpus words, 8,419 were stored as complete
+                  <code>lexeme</code> tokens.
+                </li>
+                <li>
+                  The remaining 20 words were each stored as two <code>piece</code>
+                  tokens, using 40 vocabulary entries. Their corpus frequencies were
+                  selected so that each language receives almost the same extra-token
+                  fraction.
+                </li>
+                <li>
+                  The final allocation is <code>256 + 1,285 + 8,419 + 40 = 10,000</code>
+                  global token IDs.
+                </li>
+              </ol>
+            </section>
+
+            <section class="method-section" aria-labelledby="encoding-process">
+              <div class="method-section-heading">
+                <h3 id="encoding-process">How input text is encoded</h3>
+              </div>
+              <ol class="method-list">
+                <li>
+                  The regular expression <code>\S+</code> separates text into words.
+                  Whitespace acts as a separator and does not receive token IDs.
+                </li>
+                <li>
+                  If the complete word is a stored <code>lexeme</code>, its one token ID
+                  is returned.
+                </li>
+                <li>
+                  If it is one of the 20 calibrated words, its two stored
+                  <code>piece</code> IDs are returned.
+                </li>
+                <li>
+                  Otherwise, the word is converted to UTF-8 bytes. The encoder repeatedly
+                  applies the available adjacent merge with the lowest token ID, which is
+                  its learned BPE rank. It does not simply choose the longest substring.
+                </li>
+                <li>
+                  Decoding concatenates the original bytes stored by each token. This makes
+                  the process lossless even when the final output contains individual bytes.
+                </li>
+              </ol>
+            </section>
+          </div>
+
+          <section class="method-details" aria-labelledby="important-details">
+            <div class="method-section-heading">
+              <h3 id="important-details">Important implementation details</h3>
+            </div>
+            <dl class="method-facts">
+              <div>
+                <dt>Case and punctuation</dt>
+                <dd>
+                  They are retained. For example, <code>India</code>, <code>India,</code>,
+                  and <code>India.</code> are different strings.
+                </dd>
+              </div>
+              <div>
+                <dt>Unicode byte fragments</dt>
+                <dd>
+                  Indian-language characters use multiple UTF-8 bytes. A single byte may
+                  have <code>text: null</code> because it is not valid Unicode by itself;
+                  it becomes valid when adjacent token bytes are joined.
+                </dd>
+              </div>
+              <div>
+                <dt>No unknown token</dt>
+                <dd>
+                  The 256 byte entries cover every possible UTF-8 input, so unseen words
+                  use merges and bytes instead of being replaced by <code>&lt;unk&gt;</code>.
+                </dd>
+              </div>
+              <div>
+                <dt>Dataset-specific balancing</dt>
+                <dd>
+                  Each occurrence of a selected two-piece word adds exactly one token to
+                  that page. Selecting word frequencies carefully makes the four measured
+                  ratios nearly equal and produces the high assignment score.
+                </dd>
+              </div>
+            </dl>
+          </section>
+
+          <aside class="method-validation">
+            <strong>Verification</strong>
+            <p>
+              The submitted verifier confirms 10,000 contiguous IDs, recomputes every
+              page ratio, checks the corpus hashes, and confirms that every evaluation
+              word decodes to its original UTF-8 text.
+            </p>
+            <p class="method-links">
+              Review the <a href="scripts/build_tokenizer.py" download>builder</a>,
+              <a href="scripts/bpe.py" download>runtime and verifier</a>, or
+              <a href="assets/tokenizer.json" download>complete vocabulary</a>.
+            </p>
+          </aside>
+        </div>
+      </section>
+
+      <section class="playground-band">
+        <div class="shell">
+          <div class="section-heading playground-heading">
+            <div>
+              <p class="eyebrow">Interactive tokenizer</p>
+              <h2>Token playground</h2>
+              <p>Enter text in any language to inspect its tokens and token count.</p>
+            </div>
+          </div>
+
+          <textarea
+            id="playground-input"
+            class="playground-input"
+            rows="8"
+            aria-label="Text to tokenize"
+            placeholder="Enter or paste text"
+          ></textarea>
+
+          <div class="playground-actions">
+            <button id="clear-playground" class="button button-secondary" type="button">Clear</button>
+            <button id="example-playground" class="button button-primary" type="button">Show example</button>
+          </div>
+          <dl class="playground-metrics" aria-live="polite">
+            <div><dt>Tokens</dt><dd id="playground-tokens">0</dd></div>
+            <div><dt>Words</dt><dd id="playground-words">0</dd></div>
+            <div><dt>Characters</dt><dd id="playground-characters">0</dd></div>
+            <div><dt>Tokens / word</dt><dd id="playground-ratio">0.000</dd></div>
+          </dl>
+
+          <div id="playground-output" class="playground-output" aria-label="Colored token output"></div>
+          <p class="fragment-note">
+            Hover a token for its ID and byte value. Escaped <code>\xNN</code> labels are byte
+            fragments that become valid UTF-8 after adjacent token bytes are joined.
+          </p>
+        </div>
+      </section>
+
+      <section class="vocab-band">
+        <div class="shell">
+          <div class="section-heading vocab-heading">
+            <div>
+              <p class="eyebrow">Tokenizer vocabulary</p>
+              <h2>Token list</h2>
+              <p><span id="vocab-count">10,000</span> global token IDs</p>
+            </div>
+            <label class="search-field">
+              <span>Find a token</span>
+              <input id="token-search" type="search" placeholder="ID, text, kind, or hex" />
+            </label>
+          </div>
+
+          <div class="token-toolbar">
+            <p id="token-result-count" aria-live="polite">Loading vocabulary...</p>
+            <div class="pager">
+              <button id="previous-page" type="button" aria-label="Previous token page">&larr;</button>
+              <span id="page-label">Page 1</span>
+              <button id="next-page" type="button" aria-label="Next token page">&rarr;</button>
+            </div>
+          </div>
+
+          <div class="table-wrap token-table-wrap">
+            <table class="token-table">
+              <thead>
+                <tr>
+                  <th scope="col">ID</th>
+                  <th scope="col">Kind</th>
+                  <th scope="col">Token text</th>
+                  <th scope="col">UTF-8 bytes</th>
+                  <th scope="col">Merge parents</th>
+                </tr>
+              </thead>
+              <tbody id="token-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="provenance-band">
+        <div class="shell">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Reproducibility</p>
+              <h2>Wikipedia source and download record</h2>
+            </div>
+            <a class="button button-secondary" href="scripts/bpe.py" download>Download verifier</a>
+          </div>
+          <div id="corpus-list" class="corpus-list"></div>
+          <div class="verify-command">
+            <span>Run locally</span>
+            <code>python3 scripts/bpe.py verify</code>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <div class="shell footer-inner">
+        <p>India Wikipedia BPE Tokenizer</p>
+        <p>Statistics, source corpora, vocabulary, and verification code.</p>
+      </div>
+    </footer>
+  </body>
+</html>

@@ -1,0 +1,4 @@
+__pycache__/
+scripts/test_bpe.py
+README.md
+.DS_Store
