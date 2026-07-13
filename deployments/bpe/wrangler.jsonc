@@ -1,0 +1,26 @@
+{
+  "name": "india-bpe-fairness-lab",
+  "main": "./worker.js",
+  "compatibility_date": "2026-07-10",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": false,
+  "routes": [
+    {
+      "pattern": "syedak.com/bpe*",
+      "zone_name": "syedak.com"
+    }
+  ],
+  "assets": {
+    "directory": "../../02-bpe",
+    "binding": "ASSETS",
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "404-page",
+    "run_worker_first": true
+  },
+  "observability": {
+    "enabled": true,
+    "logs": {
+      "head_sampling_rate": 1
+    }
+  }
+}

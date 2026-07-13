@@ -8,6 +8,7 @@ Current mapping:
 | Source folder | Deployment | Public route |
 | --- | --- | --- |
 | `01-baby-neuron/` | `deployments/baby-neuron/` | `https://syedak.com/baby-neuron/` |
+| `02-bpe/` | `deployments/bpe/` | `https://syedak.com/bpe/` |
 
 Deploy one project:
 
