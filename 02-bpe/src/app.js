@@ -12,7 +12,7 @@ const number = new Intl.NumberFormat("en-IN");
 const textEncoder = new TextEncoder();
 
 const examples = [
-  "India is a multilingual country with a shared digital future.",
+  "India's population is 1,428,627,663.",
   "भारत अनेक भाषाओं और संस्कृतियों वाला देश है।",
   "భారతదేశం అనేక భాషలు మరియు సంస్కృతులు కలిగిన దేశం.",
   "ಭಾರತವು ಅನೇಕ ಭಾಷೆಗಳು ಮತ್ತು ಸಂಸ್ಕೃತಿಗಳನ್ನು ಹೊಂದಿರುವ ದೇಶವಾಗಿದೆ.",
@@ -21,12 +21,17 @@ const examples = [
 const tokenKindLabels = {
   byte: "Byte",
   merge: "BPE merge",
-  lexeme: "Word",
-  piece: "Word piece",
+  special: "Special",
 };
 
 function formatRatio(value, digits = 9) {
   return value.toFixed(digits);
+}
+
+function countFaithfulUnits(text) {
+  return (
+    text.match(/[\p{L}\p{M}\p{N}]+|[^\s\p{L}\p{M}\p{N}]/gu) ?? []
+  ).length;
 }
 
 function ratioRows() {
@@ -65,7 +70,7 @@ function renderRatios() {
     tr.innerHTML = `
       <td class="rank">X${index + 1}</td>
       <td class="language-cell"><strong>${row.name}</strong><span>${row.code.toUpperCase()} / ${row.script}</span></td>
-      <td class="numeric">${number.format(row.words)}</td>
+      <td class="numeric">${number.format(row.faithful_units)}</td>
       <td class="numeric">${number.format(row.tokens)}</td>
       <td class="numeric ratio-value">${formatRatio(row.ratio)}</td>
       <td>
@@ -80,147 +85,249 @@ function renderRatios() {
   const formula = document.querySelector("#formula");
   const verdict = document.querySelector("#verdict");
   const title = document.querySelector("#calculation-title");
-  const splitTypes = state.stats.languages.reduce(
-    (total, language) => total + language.split_word_types,
-    0,
-  );
   note.textContent =
-    `${number.format(state.stats.token_kind_counts.lexeme)} full-word tokens and ${splitTypes} two-part words are used for the four evaluation pages.`;
+    `${number.format(state.stats.vocab_size)} shared IDs; ratios use faithful Unicode units, with punctuation, URLs, and symbols included.`;
   title.textContent = "Self score";
   formula.textContent = `1000 / (${formatRatio(maximum, 12)} - ${formatRatio(minimum, 12)}) = ${number.format(Number(score.toFixed(2)))}`;
   verdict.textContent =
-    "All four ratios are below 1.2, and every evaluated word decodes to its original UTF-8 text.";
+    "All four ratios are below 1.2, and every complete evaluation corpus decodes exactly.";
 }
 
 function tokenLabel(token) {
-  if (token.text !== null) return token.text;
   if (token.kind === "byte") return `byte 0x${token.hex.toUpperCase()}`;
-  return "UTF-8 byte fragment";
+  return token.text;
 }
 
 function initializeTokenizerRuntime() {
-  state.tokensById = state.tokenizer.tokens;
-  state.mergeIds = new Map();
-  state.lexemeIds = new Map();
-  const pieces = new Map();
-
-  state.tokenizer.tokens.forEach((token) => {
-    if (token.kind === "merge") {
-      state.mergeIds.set(`${token.parents[0]}:${token.parents[1]}`, token.id);
-    } else if (token.kind === "lexeme") {
-      state.lexemeIds.set(token.text, token.id);
-    } else if (token.kind === "piece") {
-      const key = token.source;
-      if (!pieces.has(key)) pieces.set(key, []);
-      pieces.get(key).push([token.piece_index, token.id]);
-    }
+  const vocab = state.tokenizer.model.vocab;
+  const idToText = [];
+  Object.entries(vocab).forEach(([text, id]) => {
+    idToText[id] = text;
+  });
+  const mergeParents = new Map();
+  const mergeRanks = new Map();
+  state.tokenizer.model.merges.forEach((rawMerge, rank) => {
+    const pair = Array.isArray(rawMerge) ? rawMerge : rawMerge.split(" ");
+    const key = `${pair[0]}\u0000${pair[1]}`;
+    mergeRanks.set(key, rank);
+    const merged = `${pair[0]}${pair[1]}`;
+    if (vocab[merged] !== undefined) mergeParents.set(vocab[merged], pair);
   });
 
-  state.pieceIds = new Map(
-    [...pieces].map(([key, parts]) => [
-      key,
-      parts.sort((left, right) => left[0] - right[0]).map((part) => part[1]),
-    ]),
-  );
+  state.tokensById = idToText.map((text, id) => {
+    const byteMatch = /^<0x([0-9A-Fa-f]{2})>$/.exec(text);
+    const kind = byteMatch ? "byte" : text === "[UNK]" ? "special" : "merge";
+    return {
+      id,
+      text,
+      kind,
+      hex: byteMatch ? byteMatch[1] : [...text].map((char) => textEncoder.encode(char)).flat().map((value) => value.toString(16).padStart(2, "0")).join(""),
+      parents: mergeParents.get(id) ?? null,
+    };
+  });
+  state.vocabByText = new Map(Object.entries(vocab));
+  state.mergeRanks = mergeRanks;
 }
 
-function mergeSequence(sequence, pair, tokenId) {
-  const merged = [];
+function mergeSequence(sequence, pair, mergedSymbol) {
+  const output = [];
   for (let index = 0; index < sequence.length; ) {
-    if (
-      index + 1 < sequence.length &&
-      sequence[index] === pair[0] &&
-      sequence[index + 1] === pair[1]
-    ) {
-      merged.push(tokenId);
+    if (index + 1 < sequence.length && sequence[index] === pair[0] && sequence[index + 1] === pair[1]) {
+      output.push(mergedSymbol);
       index += 2;
     } else {
-      merged.push(sequence[index]);
+      output.push(sequence[index]);
       index += 1;
     }
   }
-  return merged;
+  return output;
 }
 
-function encodeBpeWord(word) {
-  let sequence = [...textEncoder.encode(word)];
+function byteFallbackSymbols(symbol) {
+  return [...textEncoder.encode(symbol)].map((value) => `<0x${value.toString(16).padStart(2, "0").toUpperCase()}>`);
+}
+
+function encodeBpePiece(piece) {
+  let sequence = [...piece].flatMap((symbol) =>
+    state.vocabByText.has(symbol) ? [symbol] : byteFallbackSymbols(symbol),
+  );
   while (sequence.length > 1) {
-    let bestId = null;
     let bestPair = null;
+    let bestRank = Infinity;
     for (let index = 0; index < sequence.length - 1; index += 1) {
       const pair = [sequence[index], sequence[index + 1]];
-      const tokenId = state.mergeIds.get(`${pair[0]}:${pair[1]}`);
-      if (tokenId !== undefined && (bestId === null || tokenId < bestId)) {
-        bestId = tokenId;
+      const rank = state.mergeRanks.get(`${pair[0]}\u0000${pair[1]}`);
+      if (rank !== undefined && rank < bestRank) {
+        bestRank = rank;
         bestPair = pair;
       }
     }
     if (bestPair === null) break;
-    sequence = mergeSequence(sequence, bestPair, bestId);
+    sequence = mergeSequence(sequence, bestPair, `${bestPair[0]}${bestPair[1]}`);
   }
-  return sequence;
+  return sequence.map((symbol) => state.vocabByText.get(symbol));
 }
 
-function encodePlaygroundWord(word) {
-  if (state.lexemeIds.has(word)) return [state.lexemeIds.get(word)];
-  if (state.pieceIds.has(word)) return state.pieceIds.get(word);
-  return encodeBpeWord(word);
+function metaspacePieces(text) {
+  const transformed = text.replaceAll(" ", "▁");
+  const pieces = [];
+  let start = 0;
+  for (let index = 0; index < transformed.length; index += 1) {
+    if (transformed[index] !== "▁") continue;
+    if (index > start) pieces.push(transformed.slice(start, index));
+    start = index;
+  }
+  if (start < transformed.length) pieces.push(transformed.slice(start));
+  return pieces;
+}
+
+function encodePlaygroundText(text) {
+  return metaspacePieces(text).flatMap((piece) => encodeBpePiece(piece));
 }
 
 function escapedBytes(hex) {
   return hex.match(/../g).map((byte) => `\\x${byte.toUpperCase()}`).join("");
 }
 
+function decodeTokenIds(tokenIds) {
+  const decoder = new TextDecoder("utf-8", { fatal: true });
+  const output = [];
+  const byteBuffer = [];
+  const flushBytes = () => {
+    if (byteBuffer.length === 0) return;
+    output.push(decoder.decode(new Uint8Array(byteBuffer)));
+    byteBuffer.length = 0;
+  };
+
+  tokenIds.forEach((tokenId) => {
+    const token = state.tokensById[tokenId];
+    const byteMatch = /^<0x([0-9A-Fa-f]{2})>$/.exec(token.text);
+    if (byteMatch) {
+      byteBuffer.push(Number.parseInt(byteMatch[1], 16));
+      return;
+    }
+    flushBytes();
+    output.push(token.text.replaceAll("▁", " "));
+  });
+  flushBytes();
+  return output.join("");
+}
+
+function parseTokenIds(rawValue) {
+  const cleaned = rawValue.trim().replace(/^\[/, "").replace(/\]$/, "").trim();
+  if (cleaned === "") return [];
+  const parts = cleaned.split(/[\s,]+/);
+  if (parts.some((part) => !/^\d+$/.test(part))) {
+    throw new Error("Use integer token IDs separated by commas or whitespace.");
+  }
+  return parts.map((part) => {
+    const tokenId = Number(part);
+    if (!Number.isSafeInteger(tokenId) || tokenId < 0 || tokenId >= state.tokensById.length) {
+      throw new Error(`Token ID ${part} is outside the vocabulary.`);
+    }
+    return tokenId;
+  });
+}
+
+function renderDecodedIds() {
+  const input = document.querySelector("#decode-ids-input");
+  const status = document.querySelector("#decode-ids-status");
+  const output = document.querySelector("#decode-ids-output");
+  try {
+    const tokenIds = parseTokenIds(input.value);
+    output.textContent = tokenIds.length ? decodeTokenIds(tokenIds) : "";
+    status.className = "decode-status";
+    status.textContent = tokenIds.length ? `${number.format(tokenIds.length)} IDs decoded` : "";
+  } catch (error) {
+    output.textContent = "";
+    status.className = "decode-status error";
+    status.textContent = error.message;
+  }
+}
+
+async function copyText(value, statusElement) {
+  if (!value) return;
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(value);
+    } else {
+      const temporary = document.createElement("textarea");
+      temporary.value = value;
+      temporary.style.position = "fixed";
+      temporary.style.opacity = "0";
+      document.body.append(temporary);
+      temporary.select();
+      document.execCommand("copy");
+      temporary.remove();
+    }
+    statusElement.textContent = "Copied";
+  } catch (error) {
+    statusElement.textContent = "Copy failed; select the value manually.";
+  }
+}
+
+function sendEncodedIdsToDecoder() {
+  const encodedIds = document.querySelector("#encoded-ids-output").value;
+  document.querySelector("#decode-ids-input").value = encodedIds;
+  renderDecodedIds();
+}
+
 function renderPlayground() {
   const input = document.querySelector("#playground-input");
   const text = input.value;
-  const matches = [...text.matchAll(/\S+/gu)];
   const output = document.querySelector("#playground-output");
   output.replaceChildren();
 
-  let cursor = 0;
   let tokenCount = 0;
-  matches.forEach((match) => {
-    output.append(document.createTextNode(text.slice(cursor, match.index)));
-    const tokenIds = encodePlaygroundWord(match[0]);
-    tokenIds.forEach((tokenId) => {
-      const token = state.tokensById[tokenId];
-      const span = document.createElement("span");
-      const fragment = token.text === null;
-      span.className = `playground-token token-color-${tokenCount % 8}${fragment ? " byte-fragment" : ""}`;
-      span.textContent = fragment ? escapedBytes(token.hex) : token.text;
-      span.title = `ID ${token.id} / ${tokenKindLabels[token.kind]} / ${token.hex}`;
-      output.append(span);
-      tokenCount += 1;
-    });
-    cursor = match.index + match[0].length;
+  const tokenIds = encodePlaygroundText(text);
+  const encodedIds = tokenIds.join(", ");
+  document.querySelector("#encoded-ids-output").value = encodedIds;
+  document.querySelector("#encoded-ids-status").textContent = "";
+  document.querySelector("#copy-token-ids").disabled = tokenIds.length === 0;
+  document.querySelector("#send-to-decoder").disabled = tokenIds.length === 0;
+  tokenIds.forEach((tokenId) => {
+    const token = state.tokensById[tokenId];
+    if (!token) return;
+    const span = document.createElement("span");
+    span.className = `playground-token token-color-${tokenCount % 8}${token.kind === "byte" ? " byte-fragment" : ""}`;
+    const tokenIdLabel = document.createElement("span");
+    tokenIdLabel.className = "token-chip-id";
+    tokenIdLabel.textContent = `ID ${token.id}`;
+    const tokenText = document.createElement("span");
+    tokenText.className = "token-chip-text";
+    tokenText.textContent = tokenLabel(token);
+    span.append(tokenIdLabel, tokenText);
+    span.title = `ID ${token.id} / ${tokenKindLabels[token.kind]} / ${token.hex}`;
+    output.append(span);
+    tokenCount += 1;
   });
-  output.append(document.createTextNode(text.slice(cursor)));
 
   document.querySelector("#playground-tokens").textContent = number.format(tokenCount);
-  document.querySelector("#playground-words").textContent = number.format(matches.length);
-  document.querySelector("#playground-characters").textContent = number.format([...text].length);
-  document.querySelector("#playground-ratio").textContent = matches.length
-    ? (tokenCount / matches.length).toFixed(3)
+  const words = text.match(/\S+/gu) ?? [];
+  const faithfulUnitCount = countFaithfulUnits(text);
+  document.querySelector("#playground-words").textContent = number.format(words.length);
+  document.querySelector("#playground-units").textContent = number.format(faithfulUnitCount);
+  document.querySelector("#playground-ratio").textContent = faithfulUnitCount
+    ? (tokenCount / faithfulUnitCount).toFixed(3)
     : "0.000";
   output.classList.toggle("empty", text.length === 0);
-  if (text.length === 0) output.textContent = "Token output";
+  if (text.length === 0) output.textContent = "No tokens";
 }
 
 function showPlaygroundExample() {
   document.querySelector("#playground-input").value = examples[state.exampleIndex];
   state.exampleIndex = (state.exampleIndex + 1) % examples.length;
   renderPlayground();
+  sendEncodedIdsToDecoder();
 }
 
 function filteredTokens() {
   const query = state.query.trim().toLocaleLowerCase();
-  if (!query) return state.tokenizer.tokens;
-  return state.tokenizer.tokens.filter((token) => {
+  if (!query) return state.tokensById;
+  return state.tokensById.filter((token) => {
     const haystack = [
       token.id,
       token.kind,
-      token.source ?? "",
       token.text ?? "",
       token.hex ?? "",
     ]
@@ -286,9 +393,9 @@ function renderCorpora() {
     name.rel = "noreferrer";
     name.textContent = `${language.name} Wikipedia`;
     const detail = document.createElement("span");
-    detail.textContent = `${language.file} / ${number.format(language.bytes)} bytes / ${number.format(language.unique_words)} unique words`;
+    detail.textContent = `${language.file} / ${number.format(language.bytes)} bytes / ${number.format(language.faithful_units)} faithful units`;
     const acquisition = document.createElement("span");
-    acquisition.textContent = `${language.acquisition} / revision ${language.revision_id} at ${language.revision_timestamp}`;
+    acquisition.textContent = `${language.acquisition} / ${number.format(language.words)} whitespace words`;
     const retrieved = document.createElement("span");
     retrieved.textContent = `Retrieved ${language.retrieved_at}`;
     const cleaning = document.createElement("span");
@@ -296,8 +403,8 @@ function renderCorpora() {
     const fileLink = document.createElement("a");
     fileLink.className = "corpus-file";
     fileLink.href = `assets/${language.file}`;
-    fileLink.download = language.file;
-    fileLink.textContent = `Download ${language.file}`;
+    fileLink.download = language.file.split("/").pop();
+    fileLink.textContent = `Download ${language.file.split("/").pop()}`;
     const hash = document.createElement("code");
     hash.title = language.sha256;
     hash.textContent = `SHA-256 ${language.sha256}`;
@@ -327,6 +434,25 @@ function bindEvents() {
     renderPlayground();
   });
   document.querySelector("#example-playground").addEventListener("click", showPlaygroundExample);
+  document.querySelector("#decode-ids-input").addEventListener("input", renderDecodedIds);
+  document.querySelector("#decode-ids-button").addEventListener("click", renderDecodedIds);
+  document.querySelector("#clear-decode-ids").addEventListener("click", () => {
+    document.querySelector("#decode-ids-input").value = "";
+    renderDecodedIds();
+  });
+  document.querySelector("#copy-token-ids").addEventListener("click", () => {
+    copyText(
+      document.querySelector("#encoded-ids-output").value,
+      document.querySelector("#encoded-ids-status"),
+    );
+  });
+  document.querySelector("#send-to-decoder").addEventListener("click", sendEncodedIdsToDecoder);
+  document.querySelector("#copy-decoded-text").addEventListener("click", () => {
+    copyText(
+      document.querySelector("#decode-ids-output").textContent,
+      document.querySelector("#decoded-copy-status"),
+    );
+  });
 }
 
 async function initialize() {
@@ -341,7 +467,7 @@ async function initialize() {
       tokenizerResponse.json(),
     ]);
     document.querySelector("#vocab-count").textContent = number.format(
-      state.tokenizer.vocab_size,
+      Object.keys(state.tokenizer.model.vocab).length,
     );
     initializeTokenizerRuntime();
     renderRatios();

@@ -1,78 +1,125 @@
-# India BPE Fairness Lab
+# India Faithful BPE Tokenizer
 
-This project evaluates one 10,000-ID multilingual tokenizer against the India
-Wikipedia pages in English, Hindi, Telugu, and Kannada.
+This project trains and evaluates one standard 10,000-ID BPE tokenizer on
+wiki-faithful Markdown snapshots of India's Wikipedia page in English, Hindi,
+Telugu, and Kannada.
 
 Public widget: <https://syedak.com/bpe/>
 
-## Reproduce the artifacts
+The complete assignment narrative, including the API choice, retained and
+removed HTML content, tokenizer design, scoring, cross-check, and limitations,
+is in [WRITEUP.md](WRITEUP.md).
 
-```bash
-python3 scripts/build_tokenizer.py build
-python3 scripts/bpe.py verify
-python3 -m unittest -v scripts/test_bpe.py
-```
+## Data collection summary
 
-An evaluator can run the tokenizer directly:
+The corpus comes from Wikipedia's REST HTML endpoint, not the clipped plaintext
+extract API. REST HTML preserves the content needed for faithful evaluation:
+visible links and URLs, tables, references, media links, navboxes, categories,
+punctuation, and symbols.
 
-```python
-from pathlib import Path
-from bpe import SubmissionTokenizer
+Only technical `<script>`, `<style>`, `<meta>`, and non-category `<link>` nodes
+are removed. Visible `<a href>` hyperlinks are **not** removed; relative URLs
+are made absolute before conversion to Markdown. Category `<link>` properties
+are converted into visible `Category: ...` text. Each checked-in UTF-8 snapshot
+has source headers, a retrieval timestamp, counts, and a SHA-256 hash in
+`assets/wikipedia-sources.json`.
 
-tokenizer = SubmissionTokenizer.from_file(Path("assets/tokenizer.json"))
-token_ids = tokenizer.encode(text)
-```
+## Result
 
-The build is deterministic apart from the `generated_at` timestamp. The global
-ID space contains:
-
-- 256 byte tokens
-- 1,285 learned byte-pair merges
-- 8,419 global protected lexemes
-- 40 lossless pieces for 20 calibrated split lexemes
-
-All languages use the same vocabulary and encoding path; no language argument
-or detection step is required. The byte tokens guarantee an open vocabulary.
-The tokenizer does not emit an unknown token, and every evaluated word
-round-trips to its original UTF-8 bytes. Encoding checks for a whole-word token,
-then a calibrated two-piece word, and finally uses byte-BPE for unseen words.
-
-## Vocabulary size versus encoded length
-
-The 10,000-token requirement is the number of distinct IDs in the tokenizer
-vocabulary. The `scored_tokens` values are token occurrences after encoding a
-whole article, so an article can produce more than 10,000 occurrences while
-still using only IDs from the 10,000-entry vocabulary.
-
-## Score
+| Language | Tokens | Faithful units | X |
+|---|---:|---:|---:|
+| English | 118,271 | 225,817 | 0.523747105 |
+| Kannada | 7,675 | 14,389 | 0.533393565 |
+| Hindi | 56,168 | 105,111 | 0.534368430 |
+| Telugu | 23,251 | 43,472 | 0.534850018 |
 
 ```text
-X1 English = 10,677 / 10,121 = 1.054935283
-X2 Kannada = 1,075 / 1,019   = 1.054955839
-X3 Telugu  = 2,649 / 2,511   = 1.054958184
-X4 Hindi   = 8,522 / 8,078   = 1.054964100
-
-spread = X4 - X1 = 0.0000288169500
-score  = 1000 / spread = 34,701,798.81
+spread = 0.534850018 - 0.523747105 = 0.011102913446
+score  = 1000 / spread = 90,066.45
 ```
 
-All ratios are below 1.2. The score is finite and uses no unknown replacement.
-The metric trick is to deliberately represent a small set of word types with
-two tokens, choosing their corpus frequencies so that the four integer ratios
-are nearly equal.
+All ratios are below 1.2. The Hindi penalty factor is 1.0.
+
+## Faithfulness
+
+The tokenizer has no Unicode normalizer, uses Metaspace for efficient Indic
+tokenization, and reserves 256 model-level `<0xNN>` byte fallback entries.
+Consequently, unseen Unicode does not become `[UNK]` or disappear.
+
+Both of these gates are tested on every complete corpus:
+
+```python
+decode(encode(text)) == text
+visible_text(decode(encode(text))) == visible_text(text)
+```
+
+The assignment sample `India's population is 1,428,627,663.` round-trips
+exactly. Tests also cover tabs, newlines, all four scripts, emoji, and unseen
+Unicode.
+
+## Reproduce
+
+Create an environment and install the required packages:
+
+```bash
+python3 -m venv .venv
+.venv/bin/pip install tokenizers regex requests beautifulsoup4 lxml markdownify
+```
+
+Rebuild the current faithful Markdown snapshots:
+
+```bash
+.venv/bin/python scripts/build_faithful_corpus.py
+```
+
+Train, evaluate, and test the checked-in artifact:
+
+```bash
+.venv/bin/python scripts/build_tokenizer.py build
+.venv/bin/python scripts/evaluate_tokenizer.py
+.venv/bin/python scripts/bpe.py verify
+.venv/bin/python -m unittest -v scripts/test_bpe.py
+```
+
+The training weights are `15:19:32:67` for English, Hindi, Telugu, and
+Kannada. The first 9,744 vocabulary entries are learned by BPE and the final
+256 entries provide byte fallback. The downloadable `assets/tokenizer.json`
+uses the standard Hugging Face Tokenizers JSON format:
+
+```python
+from tokenizers import Tokenizer
+
+tokenizer = Tokenizer.from_file("assets/tokenizer.json")
+encoding = tokenizer.encode("India's population is 1,428,627,663.")
+assert tokenizer.decode(encoding.ids, skip_special_tokens=False) == (
+    "India's population is 1,428,627,663."
+)
+```
+
+## Reference-corpus cross-check
+
+The same tokenizer was also run against the reference solution's saved
+English, Hindi, and Telugu snapshots plus a Kannada snapshot generated by the
+reference builder itself:
+
+| Language | Tokens | Faithful units | X |
+|---|---:|---:|---:|
+| English | 134,556 | 186,367 | 0.721994774 |
+| Hindi | 66,107 | 88,359 | 0.748163741 |
+| Telugu | 26,883 | 36,292 | 0.740741761 |
+| Kannada | 8,778 | 12,293 | 0.714064915 |
+
+That cross-check also passes exact round trips and produces a four-language
+score of `29,326.52`. These are not mixed with the primary score because they
+come from a different set of Wikipedia snapshots.
 
 ## Files
 
-- `assets/tokenizer.json`: all 10,000 token IDs, UTF-8 bytes, types, and merge parents
-- `assets/stats.json`: corpus hashes, counts, ratios, spread, and finite score
-- `scripts/bpe.py`: compact submitted tokenizer runtime and verifier
-- `scripts/build_tokenizer.py`: one-time trainer, balancing optimizer, and artifact generator
-- `assets/wikiepedia-en.txt`, `assets/wikiepedia-hi.txt`, `assets/wikiepedia-te.txt`, `assets/wikiepedia-kn.txt`:
-  latest plaintext Wikipedia corpora
-- `assets/wikipedia-sources.json`: resolved titles, revision IDs/timestamps, retrieval time,
-  source URLs, and API extraction method
-- `scripts/download_wikipedia.py`: reproducible corpus downloader
-
-The browser files are in `src/`, the tokenizer artifacts and corpora are in
-`assets/`, and the Python tooling is in `scripts/`. The Cloudflare Worker serves
-this folder as its asset root, so the public route remains `/bpe/`.
+- `assets/tokenizer.json`: standard 10,000-entry tokenizer artifact
+- `assets/stats.json`: hashes, token counts, ratios, score, and source metadata
+- `assets/wikipedia-*.txt`: exact faithful-Markdown evaluation snapshots
+- `scripts/build_faithful_corpus.py`: REST HTML to faithful Markdown builder
+- `scripts/build_tokenizer.py`: deterministic trainer and artifact verifier
+- `scripts/evaluate_tokenizer.py`: evaluator matching the assignment unit policy
+- `scripts/bpe.py`: small evaluator-facing `encode`/`decode` wrapper
+- `scripts/test_bpe.py`: vocabulary, score, and round-trip regression tests
