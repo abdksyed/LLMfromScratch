@@ -1,0 +1,26 @@
+{
+  "name": "india-40b-design-report",
+  "main": "./worker.js",
+  "compatibility_date": "2026-07-17",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": false,
+  "routes": [
+    {
+      "pattern": "syedak.com/india-40b-design*",
+      "zone_name": "syedak.com"
+    }
+  ],
+  "assets": {
+    "directory": "../../03-india-40b-design",
+    "binding": "ASSETS",
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "404-page",
+    "run_worker_first": true
+  },
+  "observability": {
+    "enabled": true,
+    "logs": {
+      "head_sampling_rate": 1
+    }
+  }
+}

@@ -9,6 +9,7 @@ Current mapping:
 | --- | --- | --- |
 | `01-baby-neuron/` | `deployments/baby-neuron/` | `https://syedak.com/baby-neuron/` |
 | `02-bpe/` | `deployments/bpe/` | `https://syedak.com/bpe/` |
+| `03-india-40b-design/` | `deployments/india-40b-design/` | `https://syedak.com/india-40b-design/` |
 
 Deploy one project:
 

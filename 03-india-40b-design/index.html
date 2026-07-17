@@ -1,0 +1,412 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="A compact, research-backed data, tokenizer, alignment, and evaluation plan for a 40B India-first model."
+    />
+    <meta name="theme-color" content="#152019" />
+    <title>India-first 40B | Design study</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <div class="reading-progress" aria-hidden="true"><span></span></div>
+
+    <header class="topbar">
+      <div class="shell topbar-inner">
+        <a class="brand" href="#top" aria-label="India-first 40B design study home">
+          <span class="brand-mark" aria-hidden="true">40</span>
+          <span><strong>40B Design Study</strong><small>Assignment 3</small></span>
+        </a>
+        <nav class="section-nav" aria-label="Report sections">
+          <a href="#data">Data</a>
+          <a href="#cleaning">Cleaning</a>
+          <a href="#tokenizer">Tokenizer</a>
+          <a href="#alignment">Alignment</a>
+          <a href="#evaluation">Tests</a>
+        </nav>
+        <button class="print-button" type="button" aria-label="Print report">Print</button>
+      </div>
+    </header>
+
+    <main id="top">
+      <section class="hero" aria-labelledby="report-title">
+        <div class="hero-backdrop" aria-hidden="true"></div>
+        <div class="shell hero-content">
+          <p class="kicker">Design study / 17 July 2026</p>
+          <h1 id="report-title">Designing an India-first 40B</h1>
+          <p class="hero-deck">
+            A proposal for a 40B dense, multimodal model that must match Gemma 4 on reasoning,
+            code and agents, while being measurably better for India's languages,
+            institutions and daily work.
+          </p>
+          <div class="hero-metrics" aria-label="Headline decisions">
+            <div><strong>15T</strong><span>scheduled tokens</span></div>
+            <div><strong>28%</strong><span>direct India data</span></div>
+            <div><strong>200,192</strong><span>token vocabulary</span></div>
+            <div><strong>256K</strong><span>target context</span></div>
+          </div>
+          <p class="hero-note">
+            “India-first” is a coverage and evaluation constraint, not one official
+            or majoritarian point of view.
+          </p>
+        </div>
+        <a
+          class="image-credit"
+          href="https://svs.gsfc.nasa.gov/31099/"
+          target="_blank"
+          rel="noreferrer"
+        >NASA/GSFC, India night lights 2012–2016</a>
+      </section>
+
+      <section class="decision-band" aria-label="Executive decision">
+        <div class="shell decision-grid">
+          <p class="section-label">The decision</p>
+          <p class="decision-copy">
+            Train only after 1–3B proxy ablations validate the mix. Require
+            <strong>7.5T clean unique-equivalent tokens</strong>, no document more
+            than four passes, and a matched-harness lower confidence bound within
+            <strong>2 points of Gemma 4 31B</strong>. If the data or gates fail, the
+            40B run does not start or ship.
+          </p>
+        </div>
+      </section>
+
+      <section id="data" class="section data-section">
+        <div class="shell">
+          <header class="section-header">
+            <div>
+              <p class="section-label">01 / Pre-training</p>
+              <h2>Every token has a job</h2>
+            </div>
+            <p>
+              Shares are exclusive and measured after the final tokenizer. Priority
+              for collisions: agent &gt; code &gt; STEM &gt; Indic &gt; India-English &gt;
+              general. That prevents double-counting.
+            </p>
+          </header>
+
+          <div class="mixture-layout">
+            <div class="mix-chart" aria-label="15 trillion token pretraining mix">
+              <div class="mix-bar" role="img" aria-label="Pretraining mix by share">
+                <span class="mix-global" style="--share: 30%"></span>
+                <span class="mix-indic" style="--share: 20%"></span>
+                <span class="mix-india" style="--share: 8%"></span>
+                <span class="mix-code" style="--share: 22%"></span>
+                <span class="mix-stem" style="--share: 12%"></span>
+                <span class="mix-agent" style="--share: 5%"></span>
+                <span class="mix-other" style="--share: 3%"></span>
+              </div>
+              <div class="mix-total"><strong>15.0T</strong><span>scheduled exposure</span></div>
+            </div>
+
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr><th scope="col">Exclusive bucket</th><th scope="col">Share</th><th scope="col">Tokens</th><th scope="col">Collect / why</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td><i class="key mix-global"></i>Global high-quality</td><td>30%</td><td>4.50T</td><td>FineWeb/Common Pile, open books, reference and licensed news for breadth.</td></tr>
+                  <tr><td><i class="key mix-indic"></i>Native Indic</td><td>20%</td><td>3.00T</td><td>Sangraha, FineWeb2, regional publishing, broadcast, oral history and OCR.</td></tr>
+                  <tr><td><i class="key mix-india"></i>India-English + code-switch</td><td>8%</td><td>1.20T</td><td>Law, Parliament, courts, RBI, Census, state portals and Indian English.</td></tr>
+                  <tr><td><i class="key mix-code"></i>Code</td><td>22%</td><td>3.30T</td><td>Permissive Stack v2; repos, tests, issues, PRs, notebooks and docs.</td></tr>
+                  <tr><td><i class="key mix-stem"></i>Science + math</td><td>12%</td><td>1.80T</td><td>Open research, proofs, textbooks and verifier-checked exercises.</td></tr>
+                  <tr><td><i class="key mix-agent"></i>Agent/tool/process</td><td>5%</td><td>0.75T</td><td>Replayable tool schemas, terminal/browser tasks, recovery and CI traces.</td></tr>
+                  <tr><td><i class="key mix-other"></i>Other multilingual</td><td>3%</td><td>0.45T</td><td>FineWeb2 and open reference for global transfer beyond English.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="india-policy">
+            <div>
+              <p class="section-label">Inside the 3T native-Indic slice</p>
+              <h3>Depth for 12; a hard floor for every scheduled language</h3>
+            </div>
+            <div class="policy-copy">
+              <p>
+                Hindi 540B; Bengali 300B; Telugu 270B; Marathi and Tamil 255B each;
+                Urdu 225B; Gujarati, Kannada and Malayalam 180B each; Odia and
+                Punjabi 120B each; Assamese 75B. The other ten scheduled languages
+                receive 21B each; 90B covers Bhojpuri, Rajasthani, Awadhi,
+                Chhattisgarhi, Tulu, Gondi and Bhili.
+              </p>
+              <ul class="compact-list">
+                <li><strong>≥55%</strong> originally authored or transcribed in-language</li>
+                <li><strong>≤30%</strong> translation; <strong>≤15%</strong> other synthetic</li>
+                <li><strong>0.25%</strong> floor per State/UT inside direct-India data</li>
+                <li><strong>≤25%</strong> official-government share of India data</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="cleaning" class="section cleaning-section">
+        <div class="shell">
+          <header class="section-header">
+            <div>
+              <p class="section-label">02 / Data pipeline</p>
+              <h2>Clean for the objective, not for English</h2>
+            </div>
+            <p>
+              One immutable ledger follows every object from acquisition through
+              deletion: source, rights, time, hashes, language/script, transformations,
+              quality, region, synthetic lineage and opt-out ID.
+            </p>
+          </header>
+
+          <ol class="pipeline">
+            <li><span>1</span><div><strong>Rights first</strong><p>Public-domain, permissive or contracted. Reject piracy and unresolved books/news; allow-list code licenses per file.</p></div></li>
+            <li><span>2</span><div><strong>Parse by format</strong><p>DOM and PDF reading order, OCR confidence, notebook cells, tables and LaTeX. Preserve lists, citations and tests.</p></div></li>
+            <li><span>3</span><div><strong>Language-aware quality</strong><p>Paragraph-level language + script ID; native-rater-calibrated filters. Keep genuine romanization, dialect and code-switching.</p></div></li>
+            <li><span>4</span><div><strong>Deduplicate before sampling</strong><p>SHA-256, repeated spans, global MinHash, translation clusters and repo/fork/AST dedup. Store cluster size.</p></div></li>
+            <li><span>5</span><div><strong>Privacy + secrets</strong><p>Redact Aadhaar, PAN, bank, health, phone and address data; remove API keys, credentials, private messages and doxxing.</p></div></li>
+            <li><span>6</span><div><strong>Balance false positives</strong><p>Remove illegal/exploitative payloads, not caste, sexuality, political criticism or dialect. Audit removals per community and language.</p></div></li>
+            <li><span>7</span><div><strong>Contamination firewall</strong><p>Freeze evals first; remove prompts and answers via exact, 13-gram, MinHash, semantic, translated and code-AST matches.</p></div></li>
+            <li><span>8</span><div><strong>Verify + snapshot</strong><p>Execute code/agents; check math, names and numbers; cap all synthetic exposure at 12%; publish data cards and deletion logs.</p></div></li>
+          </ol>
+        </div>
+      </section>
+
+      <section id="tokenizer" class="section tokenizer-section">
+        <div class="shell">
+          <header class="section-header tokenizer-header">
+            <div>
+              <p class="section-label">03 / Tokenizer</p>
+              <h2>200,192 entries</h2>
+            </div>
+            <p>
+              Recent 22-language ablations place the useful knee near 200K. At an
+              8,192 hidden width, a tied vocabulary costs 1.64B parameters; Gemma 4's
+              262K would cost 2.15B. Spend the difference on the transformer.
+            </p>
+          </header>
+
+          <div class="tokenizer-spec">
+            <div class="vocab-ledger">
+              <div class="vocab-number">200,192</div>
+              <dl>
+                <div><dt>Learned text/code pieces</dt><dd>198,912</dd></div>
+                <div><dt>UTF-8 byte fallback</dt><dd>256</dd></div>
+                <div><dt>Roles, FIM, tools, modalities + reserve</dt><dd>1,024</dd></div>
+              </dl>
+              <p>
+                Shared corpus-driven BPE: ~180K within word/lexical boundaries, then
+                ~19K sentence-bounded superwords for prose only. No cross-field merges
+                in code, math or tool data.
+              </p>
+            </div>
+
+            <div class="fertility-wrap">
+              <h3>Fertility acceptance ceilings</h3>
+              <p class="metric-definition">Mean model tokens per Unicode word on source-disjoint native text; lower is better.</p>
+              <div class="fertility-grid" role="list" aria-label="Language fertility targets">
+                <span role="listitem"><b>English</b> 1.15</span>
+                <span role="listitem"><b>Hindi</b> 1.30</span>
+                <span role="listitem"><b>Bengali</b> 1.80</span>
+                <span role="listitem"><b>Marathi</b> 1.70</span>
+                <span role="listitem"><b>Telugu</b> 1.95</span>
+                <span role="listitem"><b>Tamil</b> 2.20</span>
+                <span role="listitem"><b>Urdu</b> 1.50</span>
+                <span role="listitem"><b>Gujarati</b> 1.85</span>
+                <span role="listitem"><b>Kannada</b> 2.25</span>
+                <span role="listitem"><b>Malayalam</b> 2.35</span>
+                <span role="listitem"><b>Odia</b> 1.75</span>
+                <span role="listitem"><b>Punjabi</b> 1.45</span>
+                <span role="listitem"><b>Assamese</b> 1.95</span>
+                <span role="listitem"><b>Nepali</b> 1.70</span>
+                <span role="listitem"><b>Maithili</b> 1.65</span>
+                <span role="listitem"><b>Dogri</b> 1.50</span>
+                <span role="listitem"><b>Konkani</b> 2.25</span>
+                <span role="listitem"><b>Sanskrit</b> 2.70</span>
+                <span role="listitem"><b>Kashmiri</b> 1.35</span>
+                <span role="listitem"><b>Sindhi</b> 1.55</span>
+                <span role="listitem"><b>Bodo</b> 2.15</span>
+                <span role="listitem"><b>Manipuri</b> 2.40</span>
+                <span role="listitem"><b>Santali</b> 3.00</span>
+              </div>
+              <p class="fertility-gate">
+                22-language macro ≤1.95, maximum ≤3.0, clean-text byte fallback
+                &lt;0.1%. Report every language, P50/P95, bytes/token and normalized
+                sequence length; no population-weighted average can hide a miss.
+              </p>
+            </div>
+          </div>
+
+          <div class="domain-targets" aria-label="Domain tokenizer targets">
+            <div><span>Code</span><strong>≤1.35</strong><small>tokens / tree-sitter lexeme</small></div>
+            <div><span>Math</span><strong>≤1.25</strong><small>tokens / LaTeX atom</small></div>
+            <div><span>Science</span><strong>+0.10</strong><small>over its language ceiling</small></div>
+            <div><span>Agent data</span><strong>≤1.20</strong><small>tokens / JSON-tool atom</small></div>
+          </div>
+          <p class="normalization-note">
+            <strong>Normalization:</strong> global NFC only; preserve nukta, ZWJ/ZWNJ,
+            Vedic marks, Urdu diacritics, emoji and original whitespace. Audited
+            compatibility mappings may apply to prose, never globally to code, math or
+            JSON. Tokenization must round-trip every byte.
+          </p>
+        </div>
+      </section>
+
+      <section id="alignment" class="section alignment-section">
+        <div class="shell">
+          <header class="section-header">
+            <div>
+              <p class="section-label">04 / Post-training + RL</p>
+              <h2>Use human judgment where truth is subjective</h2>
+            </div>
+            <p>
+              Use executable rewards where truth is verifiable. A learned reward can
+              contribute at most 20% and can never overrule a failing unit test,
+              symbolic check, tool policy or unauthorized side effect.
+            </p>
+          </header>
+
+          <div class="training-stages">
+            <div><span>1</span><strong>SFT</strong><b>3.2M</b><p>unique conversations / ~14B tokens</p></div>
+            <div><span>2</span><strong>Preference</strong><b>1.2M</b><p>DPO pairs; 300K triple-labeled</p></div>
+            <div><span>3</span><strong>RLVR</strong><b>420K × 16</b><p>math, code, science, SQL and tools</p></div>
+            <div><span>4</span><strong>Agent RL</strong><b>120K × 8</b><p>sandbox states across Indian workflows</p></div>
+            <div><span>5</span><strong>Safety</strong><b>550K</b><p>critiques + adversarial preferences</p></div>
+          </div>
+
+          <div class="alignment-grid">
+            <div>
+              <h3>What SFT teaches</h3>
+              <p>
+                650K India/Indic tasks; 650K code/repository work; 600K tool and
+                browser/terminal/office trajectories; 500K math/science; 450K grounded
+                helpfulness; 200K long context/RAG; 150K safety and correction.
+              </p>
+              <p>
+                Natural-language SFT is 45% in 12 core Indic languages, 10% in the
+                remaining scheduled languages, 10% Hinglish/code-switch and 35%
+                English. At least 25% of code and agent prompts are Indic or Hinglish.
+              </p>
+            </div>
+            <div>
+              <h3>What RL rewards</h3>
+              <p>
+                Task correctness 55%; schema/instruction compliance 15%; grounding
+                10%; efficiency 10%; language quality 10%. Critical unsafe or
+                unauthorized action ends the episode at −1. Reward the final state,
+                not a persuasive-looking chain of thought.
+              </p>
+              <p>
+                Before use, each judge/reward model needs per-language ROC-AUC ≥0.80,
+                calibration error ≤0.05 and human weighted κ ≥0.65. Audit 5% of
+                rollouts for reward hacking.
+              </p>
+            </div>
+            <div class="constitution-block">
+              <h3>Constitutional pluralism</h3>
+              <p>
+                Dignity, equality, liberty, secular pluralism, privacy and child safety.
+                For contested history, religion, caste, borders or politics: date and
+                jurisdiction, separate fact/law/opinion, attribute credible perspectives
+                and uncertainty. Include Dalit, Adivasi, minority-religion, LGBTQ+,
+                disability, rural/urban and regional annotators; retain disagreement.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="evaluation" class="section evaluation-section">
+        <div class="shell">
+          <header class="section-header">
+            <div>
+              <p class="section-label">05 / Evaluation contract</p>
+              <h2>Parity outside India; superiority inside it</h2>
+            </div>
+            <p>
+              Freeze the training cutoff and benchmark registry. Run the same harness,
+              prompts, tools and sampling against Gemma 4 31B. Three seeds, bootstrap
+              95% CIs, worst-language reporting and no launch on a critical failure.
+            </p>
+          </header>
+
+          <div class="parity-table-wrap">
+            <table class="parity-table">
+              <thead><tr><th scope="col">Capability</th><th scope="col">Gemma 4 fact</th><th scope="col">Proposed 40B gate</th><th scope="col">Evaluation</th></tr></thead>
+              <tbody>
+                <tr><td>General reasoning</td><td>85.2</td><td>≥83.2</td><td>MMLU-Pro</td></tr>
+                <tr><td>Coding</td><td>80.0</td><td>≥78.0</td><td>LiveCodeBench v6 + post-cutoff window</td></tr>
+                <tr><td>Science</td><td>84.3</td><td>≥82.3</td><td>GPQA Diamond</td></tr>
+                <tr><td>Agents</td><td>76.9</td><td>≥74.9</td><td>tau2 mean across three domains</td></tr>
+                <tr><td>Terminal agents</td><td>36.0</td><td>≥34.0</td><td>Terminal-Bench Hard</td></tr>
+                <tr><td>Long context</td><td>66.4</td><td>≥64.4</td><td>MRCR v2, 8 needles at 128K</td></tr>
+                <tr><td>Instruction following</td><td>98.9</td><td>≥96.9</td><td>IFEval strict</td></tr>
+              </tbody>
+            </table>
+            <p class="table-caption">Gemma 4 figures are official reported scores; the gate is the lower 95% CI on our matched rerun, not a cross-paper comparison.</p>
+          </div>
+
+          <div class="private-gate">
+            <div class="private-intro">
+              <p class="section-label">Bharat-Gate / private / post-cutoff</p>
+              <h3>15,000 tasks trainers never see</h3>
+              <p>
+                4,400 Bharat-22 language/culture/civic tasks; 3,000 code; 1,500 Indian
+                STEM; 1,800 sandbox agents; 3,000 safety/bias; 1,300 long-context/RAG.
+                Encrypt a hidden 20% launch set, refresh 30% quarterly, and plant canaries.
+              </p>
+            </div>
+            <dl class="launch-gates">
+              <div><dt>Indic understanding</dt><dd>MILU ≥78% macro; no language &lt;68%; gap ≤8pp</dd></div>
+              <div><dt>Native preference</dt><dd>Bharat-22 win/tie adjusted ≥55%; lower CI &gt;50%</dd></div>
+              <div><dt>Private repo work</dt><dd>≥45% issues resolved with tests; regressions ≤1%</dd></div>
+              <div><dt>Private agents</dt><dd>≥60% success; zero critical unauthorized actions</dd></div>
+              <div><dt>India STEM</dt><dd>≥70% on JEE/GATE/ISI/IISER-style expert items</dd></div>
+              <div><dt>Safety</dt><dd>High-severity unsafe ≤1%; benign over-refusal ≤5%; language gap ≤3pp</dd></div>
+            </dl>
+          </div>
+
+          <div class="eval-note">
+            <strong>Public sets are diagnostics, not secrets.</strong>
+            MILU and IndicGenBench cover Indian knowledge and generation; BFCL and
+            tau2 test tools; LiveCodeBench and fresh private repos test code. SWE-bench
+            Verified is reported for comparability but not used as a launch gate because
+            a 2026 audit found leakage and flawed tests. All exclusions and confidence
+            intervals ship with the model card.
+          </div>
+        </div>
+      </section>
+
+      <section id="sources" class="section sources-section">
+        <div class="shell sources-layout">
+          <div>
+            <p class="section-label">Primary sources</p>
+            <h2>Evidence, not decoration</h2>
+            <p class="sources-note">Sourced facts informed the proposal; all budgets and gates are our decisions.</p>
+          </div>
+          <ol class="sources-list">
+            <li><a href="https://arxiv.org/html/2607.02770v1" target="_blank" rel="noreferrer">Gemma 4 Technical Report</a><span>31B baseline, 262K vocabulary, architecture and official scores.</span></li>
+            <li><a href="https://arxiv.org/abs/2503.19786" target="_blank" rel="noreferrer">Gemma 3 Technical Report</a><span>14T-token precedent for an overtrained 27B model.</span></li>
+            <li><a href="https://arxiv.org/abs/2403.06350" target="_blank" rel="noreferrer">IndicLLMSuite / Sangraha</a><span>251B tokens across 22 Indian languages.</span></li>
+            <li><a href="https://arxiv.org/html/2506.20920v1" target="_blank" rel="noreferrer">FineWeb2</a><span>Language-adaptive multilingual web curation.</span></li>
+            <li><a href="https://arxiv.org/abs/2506.05209" target="_blank" rel="noreferrer">Common Pile</a><span>Openly licensed and public-domain pretraining sources.</span></li>
+            <li><a href="https://arxiv.org/html/2402.19173v1" target="_blank" rel="noreferrer">The Stack v2 / StarCoder2</a><span>Code provenance, dedup, PII and opt-out pipeline.</span></li>
+            <li><a href="https://arxiv.org/abs/2310.06786" target="_blank" rel="noreferrer">OpenWebMath</a><span>Math-focused extraction and deduplication.</span></li>
+            <li><a href="https://arxiv.org/html/2511.03237v1" target="_blank" rel="noreferrer">IndicSuperTokenizer</a><span>200K-vocabulary ablations and 22-language fertility.</span></li>
+            <li><a href="https://arxiv.org/abs/2411.15124" target="_blank" rel="noreferrer">Tülu 3</a><span>Open SFT, preference and RLVR post-training recipe.</span></li>
+            <li><a href="https://aclanthology.org/2025.naacl-long.507/" target="_blank" rel="noreferrer">MILU</a><span>11-language, multi-domain Indian understanding benchmark.</span></li>
+            <li><a href="https://aclanthology.org/2024.acl-long.595/" target="_blank" rel="noreferrer">IndicGenBench</a><span>Generation tasks across 29 languages and 13 scripts.</span></li>
+            <li><a href="https://openai.com/index/why-we-no-longer-evaluate-swe-bench-verified/" target="_blank" rel="noreferrer">Why SWE-bench Verified is no longer a gate</a><span>2026 contamination and test-quality audit.</span></li>
+          </ol>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <div class="shell footer-inner">
+        <p><strong>India-first 40B design study</strong> / research proposal, not a trained model.</p>
+        <a href="#top">Back to top</a>
+      </div>
+    </footer>
+  </body>
+</html>
