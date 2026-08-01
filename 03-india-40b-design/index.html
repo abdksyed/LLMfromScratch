@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="A compact, research-backed data, tokenizer, alignment, and evaluation plan for a 40B India-first model."
+      content="A research-backed plan for the data, training, safety and testing of a proposed India-first model with 40 billion parameters."
     />
     <meta name="theme-color" content="#152019" />
     <title>India-first 40B | Design study</title>
@@ -25,10 +25,9 @@
           <a href="#data">Data</a>
           <a href="#cleaning">Cleaning</a>
           <a href="#tokenizer">Tokenizer</a>
-          <a href="#alignment">Alignment</a>
+          <a href="#alignment">Post-training</a>
           <a href="#evaluation">Tests</a>
         </nav>
-        <button class="print-button" type="button" aria-label="Print report">Print</button>
       </div>
     </header>
 
@@ -39,19 +38,20 @@
           <p class="kicker">Design study / 17 July 2026</p>
           <h1 id="report-title">Designing an India-first 40B</h1>
           <p class="hero-deck">
-            A proposal for a 40B dense, multimodal model that must match Gemma 4 on reasoning,
-            code and agents, while being measurably better for India's languages,
-            institutions and daily work.
+            A plan for training a model with 40 billion parameters, the settings it
+            learns during training. It should perform as well as Gemma 4 in reasoning,
+            coding and tool use, while working better for Indian languages,
+            institutions and everyday needs.
           </p>
           <div class="hero-metrics" aria-label="Headline decisions">
-            <div><strong>15T</strong><span>scheduled tokens</span></div>
-            <div><strong>28%</strong><span>direct India data</span></div>
-            <div><strong>200,192</strong><span>token vocabulary</span></div>
-            <div><strong>256K</strong><span>target context</span></div>
+            <div><strong>15T</strong><span>total training tokens</span></div>
+            <div><strong>28%</strong><span>India-focused data</span></div>
+            <div><strong>200,192</strong><span>tokens in the vocabulary</span></div>
+            <div><strong>256K</strong><span>token context window</span></div>
           </div>
           <p class="hero-note">
-            “India-first” is a coverage and evaluation constraint, not one official
-            or majoritarian point of view.
+            “India-first” means supporting India's many languages, regions and
+            communities. It does not mean teaching one official view of India.
           </p>
         </div>
         <a
@@ -62,15 +62,17 @@
         >NASA/GSFC, India night lights 2012–2016</a>
       </section>
 
-      <section class="decision-band" aria-label="Executive decision">
+      <section class="decision-band" aria-label="Main proposal">
         <div class="shell decision-grid">
           <p class="section-label">The decision</p>
           <p class="decision-copy">
-            Train only after 1–3B proxy ablations validate the mix. Require
-            <strong>7.5T clean unique-equivalent tokens</strong>, no document more
-            than four passes, and a matched-harness lower confidence bound within
-            <strong>2 points of Gemma 4 31B</strong>. If the data or gates fail, the
-            40B run does not start or ship.
+            First, train smaller 1–3B parameter pilot models to find the best data mix.
+            Start the expensive 40B run only after these tests. After deduplication,
+            which means removing repeated documents, the dataset must contain at least
+            <strong>7.5T tokens</strong>, including at least 1T from Indian-language
+            material. During full training, the model will read <strong>15T tokens in total</strong>. This means useful
+            material may be read more than once, about twice on average. Release the
+            model only if it passes the quality and safety tests below.
           </p>
         </div>
       </section>
@@ -80,12 +82,13 @@
           <header class="section-header">
             <div>
               <p class="section-label">01 / Pre-training</p>
-              <h2>Every token has a job</h2>
+              <h2>What the model will learn from</h2>
             </div>
             <p>
-              Shares are exclusive and measured after the final tokenizer. Priority
-              for collisions: agent &gt; code &gt; STEM &gt; Indic &gt; India-English &gt;
-              general. That prevents double-counting.
+              Pre-training is the first stage, where the model learns patterns from a
+              very large dataset. Put each item in one category so it is not counted
+              twice. For example, count an Indian programming tutorial as code, not as
+              both code and Indian-language material.
             </p>
           </header>
 
@@ -100,45 +103,136 @@
                 <span class="mix-agent" style="--share: 5%"></span>
                 <span class="mix-other" style="--share: 3%"></span>
               </div>
-              <div class="mix-total"><strong>15.0T</strong><span>scheduled exposure</span></div>
+              <div class="mix-total"><strong>15.0T</strong><span>tokens read during training</span></div>
             </div>
 
             <div class="table-wrap">
               <table class="data-table">
                 <thead>
-                  <tr><th scope="col">Exclusive bucket</th><th scope="col">Share</th><th scope="col">Tokens</th><th scope="col">Collect / why</th></tr>
+                  <tr><th scope="col">Type of data</th><th scope="col">Share</th><th scope="col">Tokens read</th><th scope="col">What it includes and why</th></tr>
                 </thead>
                 <tbody>
-                  <tr><td><i class="key mix-global"></i>Global high-quality</td><td>30%</td><td>4.50T</td><td>FineWeb/Common Pile, open books, reference and licensed news for breadth.</td></tr>
-                  <tr><td><i class="key mix-indic"></i>Native Indic</td><td>20%</td><td>3.00T</td><td>Sangraha, FineWeb2, regional publishing, broadcast, oral history and OCR.</td></tr>
-                  <tr><td><i class="key mix-india"></i>India-English + code-switch</td><td>8%</td><td>1.20T</td><td>Law, Parliament, courts, RBI, Census, state portals and Indian English.</td></tr>
-                  <tr><td><i class="key mix-code"></i>Code</td><td>22%</td><td>3.30T</td><td>Permissive Stack v2; repos, tests, issues, PRs, notebooks and docs.</td></tr>
-                  <tr><td><i class="key mix-stem"></i>Science + math</td><td>12%</td><td>1.80T</td><td>Open research, proofs, textbooks and verifier-checked exercises.</td></tr>
-                  <tr><td><i class="key mix-agent"></i>Agent/tool/process</td><td>5%</td><td>0.75T</td><td>Replayable tool schemas, terminal/browser tasks, recovery and CI traces.</td></tr>
-                  <tr><td><i class="key mix-other"></i>Other multilingual</td><td>3%</td><td>0.45T</td><td>FineWeb2 and open reference for global transfer beyond English.</td></tr>
+                  <tr><td><i class="key mix-global"></i>General knowledge</td><td>30%</td><td>4.50T</td><td>FineWeb and Common Pile, plus open books, reference works and news we have permission to use. <a class="cite" href="#src-5">[5]</a><a class="cite" href="#src-10">[10]</a></td></tr>
+                  <tr><td><i class="key mix-indic"></i>Indian-language text</td><td>20%</td><td>3.00T</td><td>Sangraha and FineWeb2, plus regional books and news, broadcasts, oral histories and OCR (text extracted from scans). <a class="cite" href="#src-6">[6]</a><a class="cite" href="#src-7">[7]</a><a class="cite" href="#src-8">[8]</a></td></tr>
+                  <tr><td><i class="key mix-india"></i>Indian English and mixed languages</td><td>8%</td><td>1.20T</td><td>Indian law, Parliament, courts, RBI, Census, state websites, Indian English and natural mixing such as Hinglish.</td></tr>
+                  <tr><td><i class="key mix-code"></i>Code</td><td>22%</td><td>3.30T</td><td>The Stack v2 and other code we have permission to use, along with software projects, tests, reported problems, code reviews, notebooks and instructions. <a class="cite" href="#src-11">[11]</a></td></tr>
+                  <tr><td><i class="key mix-stem"></i>Science and math</td><td>12%</td><td>1.80T</td><td>OpenWebMath, open research papers, proofs, textbooks and exercises whose answers can be checked. <a class="cite" href="#src-12">[12]</a></td></tr>
+                  <tr><td><i class="key mix-agent"></i>Agent and tool traces</td><td>5%</td><td>0.75T</td><td>Replayable records of terminal, browser and API (software service) tasks, including failures, recovery and continuous-integration (CI) logs. <a class="cite" href="#src-14">[14]</a></td></tr>
+                  <tr><td><i class="key mix-other"></i>Other languages</td><td>3%</td><td>0.45T</td><td>FineWeb2 and open reference material in languages outside English and India. <a class="cite" href="#src-7">[7]</a></td></tr>
                 </tbody>
               </table>
             </div>
           </div>
 
+          <div class="number-rationale">
+            <div>
+              <p class="section-label">How the numbers were chosen</p>
+              <h3>Why 15T tokens and these percentages?</h3>
+            </div>
+            <div class="rationale-grid">
+              <div>
+                <strong>Why 15T total?</strong>
+                <p>
+                  The Chinchilla scaling law is an older rule for balancing model size,
+                  data and compute. It suggests about 0.8T tokens for a 40B model. Newer
+                  models train for much longer: Gemma 3 27B used 14T tokens, and
+                  Llama 3 used more than 15T. We use 15T as a starting budget, then
+                  use smaller models to check whether that much training is worth the cost.
+                  <a class="cite" href="#src-2">[2]</a><a class="cite" href="#src-3">[3]</a><a class="cite" href="#src-4">[4]</a>
+                </p>
+              </div>
+              <div>
+                <strong>Why so much code and Indian-language data?</strong>
+                <p>
+                  Coding and Indian languages are main goals, so they receive a larger
+                  share than in a general-purpose model. StarCoder2 used 3.3–4.3T code
+                  tokens. Sarvam-1 reports 2T Indian-language tokens, while about
+                  one-third of Sarvam-M's later training examples used Indian languages.
+                  <a class="cite" href="#src-8">[8]</a><a class="cite" href="#src-9">[9]</a><a class="cite" href="#src-11">[11]</a>
+                </p>
+              </div>
+              <div>
+                <strong>How the other shares were set</strong>
+                <p>
+                  General knowledge gets 30% so the model keeps broad world knowledge.
+                  India-English and mixed language gets 8% for laws, public institutions
+                  and Hinglish. Science and maths gets 12% for verifiable reasoning,
+                  tools get 5% for agent skills, and other languages get 3% for transfer.
+                  The 28% India-focused total is 20% Indian-language data plus 8% India-English.
+                  These are starting assumptions, not measured optima. Compare 1–3B pilot
+                  models with different mixes before paying for the 40B run.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="indic-feasibility">
+            <div>
+              <p class="section-label">Can we collect enough data?</p>
+              <h3>We do not already have 3T different Indian-language tokens</h3>
+            </div>
+            <div>
+              <p>
+                Sangraha contains 251B tokens across 22 languages. FineWeb2 is large,
+                but we do not know how much useful Indian-language text will remain
+                after copies and poor-quality material are removed. Sarvam-1 reports
+                training on 2T Indian-language tokens, but this does not mean that 2T
+                different tokens are publicly available and legal for us to use.
+                <a class="cite" href="#src-6">[6]</a><a class="cite" href="#src-7">[7]</a><a class="cite" href="#src-8">[8]</a>
+              </p>
+              <div class="exposure-equation" aria-label="Indian-language token calculation">
+                <span><b>≥1.0T</b> tokens after deduplication</span>
+                <i>×</i>
+                <span><b>≤3</b> readings of each document</span>
+                <i>=</i>
+                <span><b>up to 3.0T</b> tokens read during training</span>
+              </div>
+              <p class="kill-rule">
+                <strong>Required before training:</strong> find and remove material
+                that appears in both Sangraha and FineWeb2. Add regional books, news
+                and broadcast transcripts that we have permission to use, along with
+                oral-history archives and OCR (text extracted from scans). If the final collection
+                does not reach 1T tokens, delay or reduce training. Do not fill the gap
+                with excessive translations or repeated material.
+              </p>
+            </div>
+          </div>
+
           <div class="india-policy">
             <div>
-              <p class="section-label">Inside the 3T native-Indic slice</p>
-              <h3>Depth for 12; a hard floor for every scheduled language</h3>
+              <p class="section-label">How the 3T Indian-language training tokens are shared</p>
+              <h3>Give 12 languages extra focus while including all 22 languages listed in the Constitution</h3>
             </div>
             <div class="policy-copy">
               <p>
-                Hindi 540B; Bengali 300B; Telugu 270B; Marathi and Tamil 255B each;
-                Urdu 225B; Gujarati, Kannada and Malayalam 180B each; Odia and
-                Punjabi 120B each; Assamese 75B. The other ten scheduled languages
-                receive 21B each; 90B covers Bhojpuri, Rajasthani, Awadhi,
+                The Constitution's Eighth Schedule lists 22 languages. During training,
+                the model will read: Hindi 540B tokens; Bengali 300B; Telugu 270B;
+                and Marathi and Tamil 255B each. It will also read Urdu 225B;
+                Gujarati, Kannada and Malayalam 180B each; Odia and
+                Punjabi 120B each; and Assamese 75B. The other ten listed languages
+                receive 21B tokens each. The final 90B covers Bhojpuri, Rajasthani, Awadhi,
                 Chhattisgarhi, Tulu, Gondi and Bhili.
               </p>
+              <p>
+                This plan gives 90% of the Indian-language training tokens to the 12 focus
+                languages. Each of the other languages in the Eighth Schedule gets
+                at least 21B tokens during training, and 3% goes to important languages outside
+                the list. These shares consider the number of speakers, the amount of
+                available data and the different writing systems. They do not copy the
+                Census population shares exactly.
+              </p>
+              <p class="allocation-math">
+                <strong>Check the total:</strong><br />
+                540 + 300 + 270 + 255 + 255 + 225 + 180 + 180 + 180 + 120 + 120 + 75 = 2,700B<br />
+                10 other listed languages = 10 × 21B = 210B<br />
+                Other languages = 90B<br />
+                2,700B + 210B + 90B = 3,000B = 3T
+              </p>
               <ul class="compact-list">
-                <li><strong>≥55%</strong> originally authored or transcribed in-language</li>
-                <li><strong>≤30%</strong> translation; <strong>≤15%</strong> other synthetic</li>
-                <li><strong>0.25%</strong> floor per State/UT inside direct-India data</li>
-                <li><strong>≤25%</strong> official-government share of India data</li>
+                <li><strong>At least 55%</strong> must have been originally written or spoken in that language</li>
+                <li><strong>No more than 30%</strong> may be translated and no more than <strong>15%</strong> created by AI</li>
+                <li>Within India-focused data, <strong>at least 0.25%</strong> must come from each state and union territory</li>
+                <li><strong>No more than 25%</strong> from government sources</li>
               </ul>
             </div>
           </div>
@@ -149,26 +243,28 @@
         <div class="shell">
           <header class="section-header">
             <div>
-              <p class="section-label">02 / Data pipeline</p>
-              <h2>Clean for the objective, not for English</h2>
+              <p class="section-label">02 / Preparing the data</p>
+              <h2>How we prepare the training data</h2>
             </div>
             <p>
-              One immutable ledger follows every object from acquisition through
-              deletion: source, rights, time, hashes, language/script, transformations,
-              quality, region, synthetic lineage and opt-out ID.
+              Keep a provenance record for every piece of training data: where it came
+              from, whether we have permission to use it, what changes we made, and
+              how to find and remove it if its owner asks us to.
+              <a class="cite" href="#src-6">[6]</a><a class="cite" href="#src-7">[7]</a><a class="cite" href="#src-11">[11]</a>
             </p>
           </header>
 
           <ol class="pipeline">
-            <li><span>1</span><div><strong>Rights first</strong><p>Public-domain, permissive or contracted. Reject piracy and unresolved books/news; allow-list code licenses per file.</p></div></li>
-            <li><span>2</span><div><strong>Parse by format</strong><p>DOM and PDF reading order, OCR confidence, notebook cells, tables and LaTeX. Preserve lists, citations and tests.</p></div></li>
-            <li><span>3</span><div><strong>Language-aware quality</strong><p>Paragraph-level language + script ID; native-rater-calibrated filters. Keep genuine romanization, dialect and code-switching.</p></div></li>
-            <li><span>4</span><div><strong>Deduplicate before sampling</strong><p>SHA-256, repeated spans, global MinHash, translation clusters and repo/fork/AST dedup. Store cluster size.</p></div></li>
-            <li><span>5</span><div><strong>Privacy + secrets</strong><p>Redact Aadhaar, PAN, bank, health, phone and address data; remove API keys, credentials, private messages and doxxing.</p></div></li>
-            <li><span>6</span><div><strong>Balance false positives</strong><p>Remove illegal/exploitative payloads, not caste, sexuality, political criticism or dialect. Audit removals per community and language.</p></div></li>
-            <li><span>7</span><div><strong>Contamination firewall</strong><p>Freeze evals first; remove prompts and answers via exact, 13-gram, MinHash, semantic, translated and code-AST matches.</p></div></li>
-            <li><span>8</span><div><strong>Verify + snapshot</strong><p>Execute code/agents; check math, names and numbers; cap all synthetic exposure at 12%; publish data cards and deletion logs.</p></div></li>
+            <li><span>1</span><div><strong>Check rights and licences</strong><p>Use public-domain, openly licensed or contracted material. Keep an allow-list of acceptable code licences for each file. Reject pirated books and news.</p></div></li>
+            <li><span>2</span><div><strong>Parse each format correctly</strong><p>Use DOM parsing to keep the structure of websites, and preserve the reading order in PDFs. Keep OCR confidence scores, notebook cells, tables, LaTeX maths, lists, citations and software tests.</p></div></li>
+            <li><span>3</span><div><strong>Check language and quality</strong><p>Identify the language and script of each paragraph. Tune quality filters with native speakers. Keep real dialects, romanized text (Indian languages in Latin letters) and code-switching such as Hinglish.</p></div></li>
+            <li><span>4</span><div><strong>Deduplicate before sampling</strong><p>Use SHA-256 hashes for exact copies and MinHash to find near-duplicates. Also group translated copies and duplicated code repositories, forks and abstract syntax trees (ASTs), which represent code structure. Store each group's size.</p></div></li>
+            <li><span>5</span><div><strong>Remove private data and secrets</strong><p>Redact personally identifiable information (PII), including Aadhaar, PAN, bank, health, phone and address data. Remove passwords, API keys, private messages and doxxing, which means posting personal data to harm someone.</p></div></li>
+            <li><span>6</span><div><strong>Check filtering mistakes</strong><p>Remove illegal and directly dangerous material, but keep legitimate discussion of caste, sexuality, politics and minority dialects. Audit false positives, meaning safe text removed by mistake, for every language and community.</p></div></li>
+            <li><span>7</span><div><strong>Remove benchmark contamination</strong><p>Freeze the benchmark list first. Remove matching questions and answers using exact text, 13-token sequences, MinHash, meaning-based matches, translations and code ASTs.</p></div></li>
+            <li><span>8</span><div><strong>Verify and record the final dataset</strong><p>Run code and agent examples; check maths, names and numbers; keep AI-created data below 12%; and publish data cards and deletion logs.</p></div></li>
           </ol>
+
         </div>
       </section>
 
@@ -177,12 +273,18 @@
           <header class="section-header tokenizer-header">
             <div>
               <p class="section-label">03 / Tokenizer</p>
-              <h2>200,192 entries</h2>
+              <h2>How text will be split into tokens</h2>
             </div>
             <p>
-              Recent 22-language ablations place the useful knee near 200K. At an
-              8,192 hidden width, a tied vocabulary costs 1.64B parameters; Gemma 4's
-              262K would cost 2.15B. Spend the difference on the transformer.
+              The tokenizer splits text into reusable pieces. We propose a vocabulary
+              of 200,192 pieces. This is the list of all tokens the model can recognise.
+              Recent tests across 22 Indian
+              languages found little improvement beyond about 200K. The token embedding
+              matrix, which turns each token into the model's internal representation,
+              also uses parameters. At this model width, a 200K vocabulary uses about
+              1.64B parameters, while Gemma 4's 262K vocabulary would use about 2.15B.
+              The smaller vocabulary leaves more parameters for language and reasoning.
+              <a class="cite" href="#src-1">[1]</a><a class="cite" href="#src-13">[13]</a>
             </p>
           </header>
 
@@ -190,21 +292,25 @@
             <div class="vocab-ledger">
               <div class="vocab-number">200,192</div>
               <dl>
-                <div><dt>Learned text/code pieces</dt><dd>198,912</dd></div>
-                <div><dt>UTF-8 byte fallback</dt><dd>256</dd></div>
-                <div><dt>Roles, FIM, tools, modalities + reserve</dt><dd>1,024</dd></div>
+                <div><dt>Words and word parts learned from the training data</dt><dd>198,912</dd></div>
+                <div><dt>Single-byte pieces so any text can still be read</dt><dd>256</dd></div>
+                <div><dt>Control markers for chat, code, tools and images</dt><dd>1,024</dd></div>
               </dl>
               <p>
-                Shared corpus-driven BPE: ~180K within word/lexical boundaries, then
-                ~19K sentence-bounded superwords for prose only. No cross-field merges
-                in code, math or tool data.
+                Train one shared byte-pair encoding (BPE) tokenizer, which learns
+                common text pieces from the full data mix. Use about 180K pieces
+                inside word boundaries, then about 19K
+                sentence-bounded “superwords” for common prose phrases. UTF-8 byte
+                fallback ensures that any unseen text can still be read. Keep each
+                code or JSON field separate. For example, do not create one token that
+                combines the end of one field with the beginning of the next.
               </p>
             </div>
 
             <div class="fertility-wrap">
-              <h3>Fertility acceptance ceilings</h3>
-              <p class="metric-definition">Mean model tokens per Unicode word on source-disjoint native text; lower is better.</p>
-              <div class="fertility-grid" role="list" aria-label="Language fertility targets">
+              <h3>Token fertility: how many pieces should one word become?</h3>
+              <p class="metric-definition">Measure on native text from sources not used to train the tokenizer. Each number is the average tokens needed for one Unicode word; lower is better.</p>
+              <div class="fertility-grid" role="list" aria-label="Token efficiency targets by language">
                 <span role="listitem"><b>English</b> 1.15</span>
                 <span role="listitem"><b>Hindi</b> 1.30</span>
                 <span role="listitem"><b>Bengali</b> 1.80</span>
@@ -230,25 +336,74 @@
                 <span role="listitem"><b>Santali</b> 3.00</span>
               </div>
               <p class="fertility-gate">
-                22-language macro ≤1.95, maximum ≤3.0, clean-text byte fallback
-                &lt;0.1%. Report every language, P50/P95, bytes/token and normalized
-                sequence length; no population-weighted average can hide a miss.
+                The macro-average gives each of the Constitution's 22 listed Indian
+                languages equal weight. English is shown as a reference and is not part
+                of this average. The average must be no more than 1.95 tokens per word. No language may
+                exceed 3.0, and UTF-8 byte fallback on clean text must stay below 0.1%.
+                Report every language's median (P50), difficult tail (P95), bytes per
+                token and sequence length. Do not let a good Hindi score hide a poor
+                Santali score.
               </p>
             </div>
           </div>
 
           <div class="domain-targets" aria-label="Domain tokenizer targets">
-            <div><span>Code</span><strong>≤1.35</strong><small>tokens / tree-sitter lexeme</small></div>
-            <div><span>Math</span><strong>≤1.25</strong><small>tokens / LaTeX atom</small></div>
-            <div><span>Science</span><strong>+0.10</strong><small>over its language ceiling</small></div>
-            <div><span>Agent data</span><strong>≤1.20</strong><small>tokens / JSON-tool atom</small></div>
+            <div><span>Code</span><strong>≤1.35</strong><small>tokens per tree-sitter lexeme (code word or symbol)</small></div>
+            <div><span>Math</span><strong>≤1.25</strong><small>tokens per LaTeX atom (maths symbol or unit)</small></div>
+            <div><span>Science</span><strong>+0.10</strong><small>no more than 0.10 above the language's normal-text target</small></div>
+            <div><span>Agent data</span><strong>≤1.20</strong><small>tokens per JSON tool atom (field or symbol)</small></div>
           </div>
           <p class="normalization-note">
-            <strong>Normalization:</strong> global NFC only; preserve nukta, ZWJ/ZWNJ,
-            Vedic marks, Urdu diacritics, emoji and original whitespace. Audited
-            compatibility mappings may apply to prose, never globally to code, math or
-            JSON. Tokenization must round-trip every byte.
+            <strong>Use NFC, a conservative Unicode normalization:</strong> computers
+            can store the same visible character in different ways. Preserve nukta,
+            ZWJ/ZWNJ joining controls, Vedic marks, Urdu diacritics, emoji and original
+            whitespace. Carefully reviewed compatibility fixes may be used for prose,
+            but never as general replacements in code, maths or JSON. Tokenizing and
+            decoding must reproduce every byte of the original input.
           </p>
+
+          <div class="number-rationale tokenizer-number-rationale">
+            <div>
+              <p class="section-label">Why these tokenizer numbers?</p>
+              <h3>Vocabulary size, context length and fertility trade off against cost</h3>
+            </div>
+            <div class="rationale-grid">
+              <div>
+                <strong>Why 200,192 vocabulary entries?</strong>
+                <p>
+                  IndicSuperTokenizer experiments found little benefit beyond about
+                  200K entries across the 22 Indian languages. The exact total is an
+                  accounting choice: 198,912 learned pieces + 256 byte-fallback pieces
+                  + 1,024 control markers = 200,192. This also saves about 0.5B
+                  parameters compared with Gemma 4's 262K vocabulary.
+                  <a class="cite" href="#src-1">[1]</a><a class="cite" href="#src-13">[13]</a>
+                </p>
+              </div>
+              <div>
+                <strong>Why a 256K context window?</strong>
+                <p>
+                  The Gemma 4 report publishes long-context results at 128K and about
+                  256K, making 256K a defensible comparison point. It can hold long
+                  legal documents, code repositories and tool traces in one request.
+                  Moving to 1M would greatly increase memory, latency and serving cost
+                  without a matching Gemma 4 result in the report.
+                  <a class="cite" href="#src-1">[1]</a>
+                </p>
+              </div>
+              <div>
+                <strong>Why these fertility ceilings?</strong>
+                <p>
+                  These are provisional acceptance targets, not published measurements.
+                  English at 1.15 is the efficiency anchor. The higher ceilings for
+                  languages such as Malayalam, Manipuri, Sanskrit and Santali allow for
+                  harder morphology, scripts or less training data. We will replace
+                  these assumptions with held-out native-text measurements. The current
+                  22 ceilings average 1.92, leaving a small margin below the 1.95 gate,
+                  and no language is allowed to exceed 3.0.
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -256,60 +411,112 @@
         <div class="shell">
           <header class="section-header">
             <div>
-              <p class="section-label">04 / Post-training + RL</p>
-              <h2>Use human judgment where truth is subjective</h2>
+              <p class="section-label">04 / Post-training and alignment</p>
+              <h2>Teach the model to answer, use tools and act safely</h2>
             </div>
             <p>
-              Use executable rewards where truth is verifiable. A learned reward can
-              contribute at most 20% and can never overrule a failing unit test,
-              symbolic check, tool policy or unauthorized side effect.
+              Use executable rewards: scores from unit tests for code, symbolic checks
+              for maths and safe simulations for tool use. For subjective answers, use
+              trained reviewers. A learned reward model is an AI grader trained on
+              those reviews. It may provide at most 20% of the score. It
+              can never overrule a failed test, tool policy or unauthorised side effect.
+              <a class="cite" href="#src-14">[14]</a>
             </p>
           </header>
 
           <div class="training-stages">
-            <div><span>1</span><strong>SFT</strong><b>3.2M</b><p>unique conversations / ~14B tokens</p></div>
-            <div><span>2</span><strong>Preference</strong><b>1.2M</b><p>DPO pairs; 300K triple-labeled</p></div>
-            <div><span>3</span><strong>RLVR</strong><b>420K × 16</b><p>math, code, science, SQL and tools</p></div>
-            <div><span>4</span><strong>Agent RL</strong><b>120K × 8</b><p>sandbox states across Indian workflows</p></div>
-            <div><span>5</span><strong>Safety</strong><b>550K</b><p>critiques + adversarial preferences</p></div>
+            <div><span>1</span><strong>Supervised fine-tuning (SFT)</strong><b>3.2 million</b><p>conversations showing the model how to answer well; about 14B tokens</p></div>
+            <div><span>2</span><strong>Preference training (DPO)</strong><b>1.2 million</b><p>Direct Preference Optimization pairs showing a better and worse answer; three people review 300,000 pairs</p></div>
+            <div><span>3</span><strong>Reinforcement learning with verifiable rewards (RLVR)</strong><b>420K × 16</b><p>420,000 maths, code, science, SQL and tool tasks; up to 16 attempts per task</p></div>
+            <div><span>4</span><strong>Agent and tool-use reinforcement learning</strong><b>120K × 8</b><p>30,000 sandboxed tasks each for travel, retail, banking and public services; up to 8 attempts per task</p></div>
+            <div><span>5</span><strong>Safety and red-teaming</strong><b>550,000</b><p>critiques, corrected answers and adversarial preferences</p></div>
+          </div>
+
+          <div class="alignment-grid training-rationale">
+            <div>
+              <h3>Why 3.2M SFT and 1.2M DPO?</h3>
+              <p>
+                The SFT total is the sum of the task quotas below: 650K India and
+                Indian-language + 650K code + 600K tools + 500K maths and science +
+                450K sourced answers + 200K long context + 150K safety = 3.2M.
+                Fourteen billion tokens means about 4,400 tokens per conversation.
+                DPO is set to 1.2M, or one preference pair for every 2.7 SFT examples.
+                Three reviewers check 300K pairs, which is 25% of the DPO set.
+              </p>
+            </div>
+            <div>
+              <h3>Why 420K × 16 and 120K × 8?</h3>
+              <p>
+                RLVR uses 120K maths, 120K code, and 60K each for science, SQL and
+                tool tasks, totalling 420K. Sixteen attempts per task produce 6.72M
+                scored attempts and give the model several ways to find a correct
+                answer. Agent episodes are longer and more expensive, so we use 30K
+                tasks in each of four Indian domains and eight attempts, totalling
+                960K episodes. Pilot runs should compare 8 versus 16 attempts.
+              </p>
+            </div>
+            <div>
+              <h3>Why 550K safety examples?</h3>
+              <p>
+                Start with 25K adversarial, refusal and correction examples for each
+                of the 22 languages in the Eighth Schedule. That gives 550K and prevents
+                the largest languages from dominating safety training. The risk types
+                must cover privacy, fraud, violence, self-harm, sexual safety, hate,
+                caste abuse, misinformation and unauthorised tool use. These counts are
+                proposed budgets, not numbers reported by Tülu 3.
+                <a class="cite" href="#src-14">[14]</a>
+              </p>
+            </div>
           </div>
 
           <div class="alignment-grid">
             <div>
-              <h3>What SFT teaches</h3>
+              <h3>What the SFT examples cover</h3>
               <p>
-                650K India/Indic tasks; 650K code/repository work; 600K tool and
-                browser/terminal/office trajectories; 500K math/science; 450K grounded
-                helpfulness; 200K long context/RAG; 150K safety and correction.
+                Use 650,000 India and Indian-language tasks, 650,000 coding tasks and
+                600,000 browser, terminal and office-tool trajectories (recorded action
+                sequences). Add 500,000 maths and science tasks, 450,000 grounded answers
+                supported by sources, 200,000 long-context and RAG tasks, and 150,000
+                safety examples. RAG means answering with retrieved documents.
               </p>
               <p>
-                Natural-language SFT is 45% in 12 core Indic languages, 10% in the
-                remaining scheduled languages, 10% Hinglish/code-switch and 35%
-                English. At least 25% of code and agent prompts are Indic or Hinglish.
+                Of the natural-language examples, 45% use the 12 focus
+                languages, 10% use the other languages listed in the Constitution,
+                10% mix languages naturally, such as Hinglish, and 35% use English.
+                At least 25% of coding and tool requests are in an Indian language or Hinglish.
               </p>
             </div>
             <div>
-              <h3>What RL rewards</h3>
+              <h3>How practice attempts are scored</h3>
               <p>
-                Task correctness 55%; schema/instruction compliance 15%; grounding
-                10%; efficiency 10%; language quality 10%. Critical unsafe or
-                unauthorized action ends the episode at −1. Reward the final state,
-                not a persuasive-looking chain of thought.
+                Give 55% of the score for the correct result and 15% for following the
+                instructions and required tool format. Give 10% each for supporting
+                evidence, working efficiently and using clear language. Any serious
+                unsafe action or use of a tool without permission ends the attempt with
+                a failure score of −1. Score the final result, not a persuasive-looking
+                chain of thought.
               </p>
               <p>
-                Before use, each judge/reward model needs per-language ROC-AUC ≥0.80,
-                calibration error ≤0.05 and human weighted κ ≥0.65. Audit 5% of
-                rollouts for reward hacking.
+                Before using an AI grader, compare it with native-speaking reviewers
+                in every language. Its ROC-AUC must be at least 0.80, meaning it ranks
+                better answers above worse ones reliably. Calibration error is the gap
+                between stated confidence and actual accuracy. It must be at most 0.05.
+                Human agreement measured by weighted kappa (κ) must be at least 0.65.
+                People independently recheck 5% of attempts to catch reward hacking.
+                This is when the model exploits the scoring rules without doing the task well.
               </p>
             </div>
             <div class="constitution-block">
-              <h3>Constitutional pluralism</h3>
+              <h3>Represent many Indian perspectives</h3>
               <p>
-                Dignity, equality, liberty, secular pluralism, privacy and child safety.
-                For contested history, religion, caste, borders or politics: date and
-                jurisdiction, separate fact/law/opinion, attribute credible perspectives
-                and uncertainty. Include Dalit, Adivasi, minority-religion, LGBTQ+,
-                disability, rural/urban and regional annotators; retain disagreement.
+                Follow the constitutional values of dignity, equality, liberty,
+                freedom for different religions, privacy and child safety. For disputed
+                history, religion, caste, borders or politics, say which time and place
+                the answer covers. Separate facts, laws and opinions, and be clear when
+                the evidence is uncertain.
+                Reviewers must include Dalit, Adivasi, religious-minority, LGBTQ+,
+                disabled, rural, urban and regionally diverse people. Do not force all
+                reviewers to agree when reasonable disagreement exists within India.
               </p>
             </div>
           </div>
@@ -320,59 +527,93 @@
         <div class="shell">
           <header class="section-header">
             <div>
-              <p class="section-label">05 / Evaluation contract</p>
-              <h2>Parity outside India; superiority inside it</h2>
+              <p class="section-label">05 / Evaluation and launch tests</p>
+              <h2>How we decide if the model is good enough</h2>
             </div>
             <p>
-              Freeze the training cutoff and benchmark registry. Run the same harness,
-              prompts, tools and sampling against Gemma 4 31B. Three seeds, bootstrap
-              95% CIs, worst-language reporting and no launch on a critical failure.
+              Before training, freeze the training-data cutoff date and benchmark list.
+              Test this model and Gemma 4 31B with the same evaluation harness, which
+              is the program that runs and scores the tests. Use the same prompts, tools and
+              settings. Run three random seeds, meaning three
+              repeatable runs with different random starting choices. Report a 95%
+              confidence interval. This is the range in which the true score is likely
+              to fall. Also show the weakest language, not only the overall average.
             </p>
           </header>
 
+          <div class="margin-rationale">
+            <div>
+              <p class="section-label">Comparing with Gemma 4</p>
+              <h3>Use a two-point non-inferiority margin as the largest allowed gap</h3>
+            </div>
+            <div>
+              <p>
+                “As good as Gemma 4” needs a rule chosen before seeing the results.
+                A non-inferiority margin is the largest gap we will accept. For every
+                benchmark scored as a percentage, subtract Gemma 4's score from this
+                model's score. Then use paired bootstrap: repeatedly draw samples from
+                the same test questions to estimate a 95% confidence interval for the
+                difference. Even the lower end of that interval must remain inside the
+                allowed gap. This stops us from treating small, noisy changes as certain.
+                <a class="cite" href="#src-17">[17]</a><a class="cite" href="#src-18">[18]</a>
+              </p>
+              <p>
+                A two-point margin allows at most two extra failures for every 100 tasks.
+                This is our maximum allowance. Gemma 4 did not publish a two-point
+                allowance. Each benchmark may set a smaller margin. If a test has too few questions to measure a
+                two-point gap reliably, add questions instead of accepting a larger gap.
+                For safety and tool use without permission, the allowed gap is zero.
+              </p>
+            </div>
+          </div>
+
           <div class="parity-table-wrap">
             <table class="parity-table">
-              <thead><tr><th scope="col">Capability</th><th scope="col">Gemma 4 fact</th><th scope="col">Proposed 40B gate</th><th scope="col">Evaluation</th></tr></thead>
+              <thead><tr><th scope="col">Ability</th><th scope="col">Gemma 4 score</th><th scope="col">Minimum target</th><th scope="col">Test used</th></tr></thead>
               <tbody>
                 <tr><td>General reasoning</td><td>85.2</td><td>≥83.2</td><td>MMLU-Pro</td></tr>
-                <tr><td>Coding</td><td>80.0</td><td>≥78.0</td><td>LiveCodeBench v6 + post-cutoff window</td></tr>
+                <tr><td>Coding</td><td>80.0</td><td>≥78.0</td><td>LiveCodeBench v6 plus questions published after the training-data cutoff, the date when collection ended</td></tr>
                 <tr><td>Science</td><td>84.3</td><td>≥82.3</td><td>GPQA Diamond</td></tr>
-                <tr><td>Agents</td><td>76.9</td><td>≥74.9</td><td>tau2 mean across three domains</td></tr>
-                <tr><td>Terminal agents</td><td>36.0</td><td>≥34.0</td><td>Terminal-Bench Hard</td></tr>
-                <tr><td>Long context</td><td>66.4</td><td>≥64.4</td><td>MRCR v2, 8 needles at 128K</td></tr>
-                <tr><td>Instruction following</td><td>98.9</td><td>≥96.9</td><td>IFEval strict</td></tr>
+                <tr><td>Using tools to finish multi-step tasks</td><td>76.9</td><td>≥74.9</td><td>tau2 average across its three task areas</td></tr>
+                <tr><td>Completing command-line tasks</td><td>36.0</td><td>≥34.0</td><td>Terminal-Bench Hard</td></tr>
+                <tr><td>Long documents</td><td>66.4</td><td>≥64.4</td><td>Find 8 hidden facts in a 128K-token document (MRCR v2)</td></tr>
+                <tr><td>Following instructions</td><td>98.9</td><td>≥96.9</td><td>Strict instruction-following test (IFEval)</td></tr>
               </tbody>
             </table>
-            <p class="table-caption">Gemma 4 figures are official reported scores; the gate is the lower 95% CI on our matched rerun, not a cross-paper comparison.</p>
+            <p class="table-caption">These are Gemma 4's officially reported scores. <a class="cite" href="#src-1">[1]</a> The table shows the largest allowed two-point gap; some benchmarks will require a score closer to Gemma 4.</p>
           </div>
 
           <div class="private-gate">
             <div class="private-intro">
-              <p class="section-label">Bharat-Gate / private / post-cutoff</p>
-              <h3>15,000 tasks trainers never see</h3>
+              <p class="section-label">Private India test set</p>
+              <h3>15,000 tasks kept hidden from the training team</h3>
               <p>
-                4,400 Bharat-22 language/culture/civic tasks; 3,000 code; 1,500 Indian
-                STEM; 1,800 sandbox agents; 3,000 safety/bias; 1,300 long-context/RAG.
-                Encrypt a hidden 20% launch set, refresh 30% quarterly, and plant canaries.
+                Include 4,400 Indian-language, culture and civic tasks and 3,000 coding
+                tasks. Add 1,500 Indian maths and science tasks, 1,800 simulated tool-use
+                tasks, 3,000 safety and bias checks and 1,300 long-document tasks.
+                Encrypt and seal 20% until the final launch test, replace 30% every
+                three months, and plant canary items that reveal if the hidden set leaks.
               </p>
             </div>
             <dl class="launch-gates">
-              <div><dt>Indic understanding</dt><dd>MILU ≥78% macro; no language &lt;68%; gap ≤8pp</dd></div>
-              <div><dt>Native preference</dt><dd>Bharat-22 win/tie adjusted ≥55%; lower CI &gt;50%</dd></div>
-              <div><dt>Private repo work</dt><dd>≥45% issues resolved with tests; regressions ≤1%</dd></div>
-              <div><dt>Private agents</dt><dd>≥60% success; zero critical unauthorized actions</dd></div>
-              <div><dt>India STEM</dt><dd>≥70% on JEE/GATE/ISI/IISER-style expert items</dd></div>
-              <div><dt>Safety</dt><dd>High-severity unsafe ≤1%; benign over-refusal ≤5%; language gap ≤3pp</dd></div>
+              <div><dt>Indian-language knowledge</dt><dd>MILU macro-average ≥78%, giving each language equal weight; every language ≥68%; gap between the best and worst language ≤8 points</dd></div>
+              <div><dt>Native-speaker preference</dt><dd>Native speakers must prefer this model over Gemma 4, or rate them equal, in at least 55% of comparisons; even the lower end of the confidence interval must exceed 50%</dd></div>
+              <div><dt>Private software projects</dt><dd>Resolve at least 45% of reported issues and break no more than 1% of existing tests</dd></div>
+              <div><dt>Private tool-use tasks</dt><dd>≥60% success; zero serious unauthorised actions</dd></div>
+              <div><dt>Indian science and maths</dt><dd>≥70% on JEE/GATE/ISI/IISER-style expert questions</dd></div>
+              <div><dt>Safety</dt><dd>Serious unsafe answers ≤1%; refusals of harmless requests ≤5%; difference between languages ≤3 points</dd></div>
             </dl>
           </div>
 
           <div class="eval-note">
-            <strong>Public sets are diagnostics, not secrets.</strong>
-            MILU and IndicGenBench cover Indian knowledge and generation; BFCL and
-            tau2 test tools; LiveCodeBench and fresh private repos test code. SWE-bench
-            Verified is reported for comparability but not used as a launch gate because
-            a 2026 audit found leakage and flawed tests. All exclusions and confidence
-            intervals ship with the model card.
+            <strong>Public benchmarks help track progress, but their questions may have
+            leaked into training data.</strong> MILU and IndicGenBench test Indian
+            knowledge and language generation. BFCL and tau2 test tool use.
+            LiveCodeBench and new tasks from private software projects test coding.
+            Report SWE-bench Verified for comparison, but do not use it for the launch
+            decision because a 2026 audit found leaked questions and faulty tests. The
+            final model card must list any removed test questions and all confidence intervals.
+            <a class="cite" href="#src-15">[15]</a><a class="cite" href="#src-16">[16]</a><a class="cite" href="#src-19">[19]</a>
           </div>
         </div>
       </section>
@@ -381,22 +622,29 @@
         <div class="shell sources-layout">
           <div>
             <p class="section-label">Primary sources</p>
-            <h2>Evidence, not decoration</h2>
-            <p class="sources-note">Sourced facts informed the proposal; all budgets and gates are our decisions.</p>
+            <h2>Research used for this plan</h2>
+            <p class="sources-note">The numbered links throughout the page point here. Published work supports the facts and comparisons; the proposed budgets and targets are still our design decisions.</p>
           </div>
           <ol class="sources-list">
-            <li><a href="https://arxiv.org/html/2607.02770v1" target="_blank" rel="noreferrer">Gemma 4 Technical Report</a><span>31B baseline, 262K vocabulary, architecture and official scores.</span></li>
-            <li><a href="https://arxiv.org/abs/2503.19786" target="_blank" rel="noreferrer">Gemma 3 Technical Report</a><span>14T-token precedent for an overtrained 27B model.</span></li>
-            <li><a href="https://arxiv.org/abs/2403.06350" target="_blank" rel="noreferrer">IndicLLMSuite / Sangraha</a><span>251B tokens across 22 Indian languages.</span></li>
-            <li><a href="https://arxiv.org/html/2506.20920v1" target="_blank" rel="noreferrer">FineWeb2</a><span>Language-adaptive multilingual web curation.</span></li>
-            <li><a href="https://arxiv.org/abs/2506.05209" target="_blank" rel="noreferrer">Common Pile</a><span>Openly licensed and public-domain pretraining sources.</span></li>
-            <li><a href="https://arxiv.org/html/2402.19173v1" target="_blank" rel="noreferrer">The Stack v2 / StarCoder2</a><span>Code provenance, dedup, PII and opt-out pipeline.</span></li>
-            <li><a href="https://arxiv.org/abs/2310.06786" target="_blank" rel="noreferrer">OpenWebMath</a><span>Math-focused extraction and deduplication.</span></li>
-            <li><a href="https://arxiv.org/html/2511.03237v1" target="_blank" rel="noreferrer">IndicSuperTokenizer</a><span>200K-vocabulary ablations and 22-language fertility.</span></li>
-            <li><a href="https://arxiv.org/abs/2411.15124" target="_blank" rel="noreferrer">Tülu 3</a><span>Open SFT, preference and RLVR post-training recipe.</span></li>
-            <li><a href="https://aclanthology.org/2025.naacl-long.507/" target="_blank" rel="noreferrer">MILU</a><span>11-language, multi-domain Indian understanding benchmark.</span></li>
-            <li><a href="https://aclanthology.org/2024.acl-long.595/" target="_blank" rel="noreferrer">IndicGenBench</a><span>Generation tasks across 29 languages and 13 scripts.</span></li>
-            <li><a href="https://openai.com/index/why-we-no-longer-evaluate-swe-bench-verified/" target="_blank" rel="noreferrer">Why SWE-bench Verified is no longer a gate</a><span>2026 contamination and test-quality audit.</span></li>
+            <li id="src-1"><a href="https://arxiv.org/html/2607.02770v1" target="_blank" rel="noreferrer">Gemma 4 Technical Report</a><span>Model size, tokenizer vocabulary, architecture and official benchmark scores used for comparison.</span></li>
+            <li id="src-2"><a href="https://arxiv.org/html/2503.19786v1" target="_blank" rel="noreferrer">Gemma 3 Technical Report</a><span>27B model trained for 14T tokens.</span></li>
+            <li id="src-3"><a href="https://ai.meta.com/blog/meta-llama-3/" target="_blank" rel="noreferrer">Meta Llama 3</a><span>More than 15T public-source pretraining tokens.</span></li>
+            <li id="src-4"><a href="https://arxiv.org/abs/2203.15556" target="_blank" rel="noreferrer">Chinchilla scaling laws</a><span>Scaling law for balancing parameter count, training data and compute.</span></li>
+            <li id="src-5"><a href="https://arxiv.org/html/2406.17557v1" target="_blank" rel="noreferrer">FineWeb</a><span>15T-token cleaned English web collection.</span></li>
+            <li id="src-6"><a href="https://arxiv.org/html/2403.06350v2" target="_blank" rel="noreferrer">IndicLLMSuite / Sangraha</a><span>251B tokens across 22 Indian languages.</span></li>
+            <li id="src-7"><a href="https://arxiv.org/html/2506.20920v1" target="_blank" rel="noreferrer">FineWeb2</a><span>Web-data collection and language-specific cleaning across more than 1,000 languages.</span></li>
+            <li id="src-8"><a href="https://www.sarvam.ai/blogs/sarvam-1" target="_blank" rel="noreferrer">Sarvam-1</a><span>Reports a roughly 2T-token Indian-language training collection.</span></li>
+            <li id="src-9"><a href="https://www.sarvam.ai/blogs/sarvam-m" target="_blank" rel="noreferrer">Sarvam-M</a><span>About one-third Indian-language completions in post-training samples.</span></li>
+            <li id="src-10"><a href="https://arxiv.org/abs/2506.05209" target="_blank" rel="noreferrer">Common Pile</a><span>Openly licensed and public-domain pretraining sources.</span></li>
+            <li id="src-11"><a href="https://arxiv.org/html/2402.19173v1" target="_blank" rel="noreferrer">The Stack v2 / StarCoder2</a><span>3.3–4.3T code tokens, source tracking and duplicate removal.</span></li>
+            <li id="src-12"><a href="https://arxiv.org/abs/2310.06786" target="_blank" rel="noreferrer">OpenWebMath</a><span>14.7B mathematical tokens with math-focused filtering.</span></li>
+            <li id="src-13"><a href="https://arxiv.org/html/2511.03237v1" target="_blank" rel="noreferrer">IndicSuperTokenizer</a><span>Tests of vocabulary size and token efficiency across 22 languages.</span></li>
+            <li id="src-14"><a href="https://arxiv.org/abs/2411.15124" target="_blank" rel="noreferrer">Tülu 3</a><span>Open methods for SFT, preference training and reinforcement learning with checked answers.</span></li>
+            <li id="src-15"><a href="https://aclanthology.org/2025.naacl-long.507/" target="_blank" rel="noreferrer">MILU</a><span>Indian understanding benchmark covering 11 languages and several subject areas.</span></li>
+            <li id="src-16"><a href="https://aclanthology.org/2024.acl-long.595/" target="_blank" rel="noreferrer">IndicGenBench</a><span>Generation tasks across 29 languages and 13 scripts.</span></li>
+            <li id="src-17"><a href="https://aclanthology.org/2022.lrec-1.640/" target="_blank" rel="noreferrer">Difference and confidence intervals</a><span>Paired bootstrap and confidence intervals for comparing language models.</span></li>
+            <li id="src-18"><a href="https://aclanthology.org/2020.emnlp-main.745/" target="_blank" rel="noreferrer">With Little Power Comes Great Responsibility</a><span>Power analysis: how many test questions are needed to trust a score difference.</span></li>
+            <li id="src-19"><a href="https://openai.com/index/why-we-no-longer-evaluate-swe-bench-verified/" target="_blank" rel="noreferrer">Why SWE-bench Verified is no longer a gate</a><span>2026 audit explaining why this benchmark should not decide launch.</span></li>
           </ol>
         </div>
       </section>

@@ -29,5 +29,4 @@ const observer = new IntersectionObserver(
 
 sections.forEach((section) => observer.observe(section));
 window.addEventListener("scroll", updateProgress, { passive: true });
-document.querySelector(".print-button").addEventListener("click", () => window.print());
 updateProgress();
