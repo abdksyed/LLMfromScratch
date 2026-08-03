@@ -1,0 +1,181 @@
+{
+  "generated_utc": "2026-08-01T20:04:27Z",
+  "cleaner_sha256": "676e9d9a2b6f6395f6400d8e62f488793da6d11ff2a16a77589d3e89e007b81b",
+  "input": {
+    "file": "denovoswe_traj_filtered.jsonl",
+    "bytes": 4617116720,
+    "records": 11463,
+    "unique_instances": 2768,
+    "prompt_tokens_logged": 45623369850,
+    "completion_tokens_logged": 613375098,
+    "sources": {
+      "deepseek-v4-pro": 9699,
+      "ali-deepseek-v4-pro": 1764
+    },
+    "folders": 33,
+    "messages": 1638639,
+    "score_hist": {
+      "0.6": 142,
+      "0.7": 637,
+      "0.8": 1783,
+      "0.9": 3746,
+      "1.0": 5154
+    }
+  },
+  "funnel": [
+    {
+      "stage": "input",
+      "records": 11463
+    },
+    {
+      "stage": "exact-id dedup",
+      "removed": 0
+    },
+    {
+      "stage": "decontamination",
+      "removed": 1
+    },
+    {
+      "stage": "verifier-score gate",
+      "removed": 8386
+    },
+    {
+      "stage": "rollout collapse",
+      "removed": 1771
+    },
+    {
+      "stage": "language validation",
+      "removed": 0
+    },
+    {
+      "stage": "heuristic quality",
+      "removed": 87
+    },
+    {
+      "stage": "minhash near-dupe",
+      "removed": 6
+    },
+    {
+      "stage": "output",
+      "records": 1212
+    }
+  ],
+  "counters": {
+    "input_records": 11463,
+    "input_bytes": 4617116720,
+    "dropped_decontam": 1,
+    "dropped_low_score": 8386,
+    "dropped_rollout_dupe": 1771,
+    "unique_instances_in_input": 2768,
+    "survivors_after_metadata_gates": 1305,
+    "boilerplate_chars_hoisted": 18024660,
+    "boilerplate_chars": 2015593,
+    "phones_redacted": 23,
+    "secrets_redacted": 14,
+    "messages_out": 130894,
+    "normalized_msgs": 17019,
+    "emails_redacted": 2710,
+    "pip_noise_lines": 15450,
+    "copyright_lines_preserved": 1905,
+    "local_ips_kept": 1289,
+    "cr_progress_msgs": 154,
+    "separator_bars": 1278,
+    "ips_redacted": 655,
+    "dropped_heuristics": 87,
+    "nbsp_msgs": 24,
+    "ansi_msgs": 142,
+    "html_entity_msgs": 66,
+    "placeholder_emails_kept": 306,
+    "role_prefix_lines": 14,
+    "zero_width_msgs": 9,
+    "ghost_tags_removed": 55,
+    "ghost_tag_msgs": 15,
+    "ghost_tags_escaped_in_code": 15,
+    "dropped_near_dupe": 6,
+    "zwj_stripped": 4,
+    "unique_system_prompts": 1,
+    "unique_tool_schemas": 1,
+    "output_records": 1212,
+    "output_tokens": 53569839,
+    "chars_in": 221281834,
+    "chars_out": 218963860
+  },
+  "languages": {
+    "en": 1305
+  },
+  "reject_reasons": {
+    "heur:dup_line_ratio": 55,
+    "heur:symbol_ratio": 35
+  },
+  "contaminated_repos": {
+    "requests": 1
+  },
+  "output": {
+    "records": 1212,
+    "tokens": 53569839,
+    "shards": 3,
+    "bytes": 56580675,
+    "chars_in": 221281834,
+    "chars_out": 218963860
+  },
+  "manifest_sample": {
+    "shard": "shard-0000.jsonl.gz",
+    "shard_index": 0,
+    "created_utc": "2026-08-01T20:03:02Z",
+    "source_dataset": "denovoswe_traj_filtered.jsonl",
+    "source_family": "DeNovoSWE agentic trajectories (deepseek-v4-pro rollouts)",
+    "license": "MIT",
+    "records": 500,
+    "tokens": 23992567,
+    "tokenizer": "cl100k_base",
+    "languages": {
+      "en": 500
+    },
+    "sources": {
+      "deepseek-v4-pro": 500
+    },
+    "verifier_score_min": 1.0,
+    "instance_ids": [
+      "a-parida12_pdf2dcm_pr-1",
+      "aarande_nexradaws_pr-1",
+      "aboutcode-org_gemfileparser2_pr7",
+      "acorg_seqgen_pr-1",
+      "adamchainz_pip-lock_pr-1",
+      "..."
+    ],
+    "sha256_jsonl": "7a4383ab385c43f9cb0324fd8b89aba3a5916687ac159a00ba5ee0f6f83bc1a9",
+    "sha256_gz": "017408a9ff90838ef475a63de525dcfe4b2ea61281d6b2c263e64c45d15743ff",
+    "cleaner_script": "scripts/clean_pipeline.py",
+    "cleaner_sha256": "676e9d9a2b6f6395f6400d8e62f488793da6d11ff2a16a77589d3e89e007b81b",
+    "strategies_applied": [
+      "1-boilerplate",
+      "2-normalisation",
+      "3-ghost-tags",
+      "4-language-id",
+      "5-quality(heuristic+verifier)",
+      "6-dedup(exact+rollout+minhash-lsh)",
+      "7-pii",
+      "8-decontamination",
+      "9-manifest"
+    ]
+  },
+  "env": {
+    "tiktoken": true,
+    "datasketch": true,
+    "langdetect": true,
+    "python": "3.14.6"
+  },
+  "config": {
+    "score_gate": 1.0,
+    "minhash_perm": 128,
+    "minhash_threshold": 0.67,
+    "shingle_k": 8,
+    "shard_size": 500,
+    "mean_word_len": [
+      3.0,
+      10.0
+    ],
+    "max_symbol_ratio": 0.1,
+    "max_dup_line_ratio": 0.3
+  }
+}

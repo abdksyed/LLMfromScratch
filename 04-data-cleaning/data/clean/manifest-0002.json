@@ -1,0 +1,42 @@
+{
+  "shard": "shard-0002.jsonl.gz",
+  "shard_index": 2,
+  "created_utc": "2026-08-01T20:04:27Z",
+  "source_dataset": "denovoswe_traj_filtered.jsonl",
+  "source_family": "DeNovoSWE agentic trajectories (deepseek-v4-pro rollouts)",
+  "license": "MIT",
+  "records": 212,
+  "tokens": 9964331,
+  "tokenizer": "cl100k_base",
+  "languages": {
+    "en": 212
+  },
+  "sources": {
+    "deepseek-v4-pro": 171,
+    "ali-deepseek-v4-pro": 41
+  },
+  "verifier_score_min": 1.0,
+  "instance_ids": [
+    "15five_scim2-filter-parser_pr13",
+    "LasLabs_python-five9_pr18",
+    "LeapBeyond_scrubadub_pr54",
+    "NextThought_sphinxcontrib-programoutput_pr41",
+    "abersheeran_a2wsgi_pr-1",
+    "..."
+  ],
+  "sha256_jsonl": "f5c446c91093bc3d6173f482cba0ac10d3e6ebf3915163c87b854a4a75706ba3",
+  "sha256_gz": "1094c291cb3b7880914251fc5f3d16390549a895b7e83968a010558f1de751de",
+  "cleaner_script": "scripts/clean_pipeline.py",
+  "cleaner_sha256": "676e9d9a2b6f6395f6400d8e62f488793da6d11ff2a16a77589d3e89e007b81b",
+  "strategies_applied": [
+    "1-boilerplate",
+    "2-normalisation",
+    "3-ghost-tags",
+    "4-language-id",
+    "5-quality(heuristic+verifier)",
+    "6-dedup(exact+rollout+minhash-lsh)",
+    "7-pii",
+    "8-decontamination",
+    "9-manifest"
+  ]
+}

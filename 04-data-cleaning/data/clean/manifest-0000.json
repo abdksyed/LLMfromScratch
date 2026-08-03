@@ -1,0 +1,41 @@
+{
+  "shard": "shard-0000.jsonl.gz",
+  "shard_index": 0,
+  "created_utc": "2026-08-01T20:03:02Z",
+  "source_dataset": "denovoswe_traj_filtered.jsonl",
+  "source_family": "DeNovoSWE agentic trajectories (deepseek-v4-pro rollouts)",
+  "license": "MIT",
+  "records": 500,
+  "tokens": 23992567,
+  "tokenizer": "cl100k_base",
+  "languages": {
+    "en": 500
+  },
+  "sources": {
+    "deepseek-v4-pro": 500
+  },
+  "verifier_score_min": 1.0,
+  "instance_ids": [
+    "a-parida12_pdf2dcm_pr-1",
+    "aarande_nexradaws_pr-1",
+    "aboutcode-org_gemfileparser2_pr7",
+    "acorg_seqgen_pr-1",
+    "adamchainz_pip-lock_pr-1",
+    "..."
+  ],
+  "sha256_jsonl": "7a4383ab385c43f9cb0324fd8b89aba3a5916687ac159a00ba5ee0f6f83bc1a9",
+  "sha256_gz": "017408a9ff90838ef475a63de525dcfe4b2ea61281d6b2c263e64c45d15743ff",
+  "cleaner_script": "scripts/clean_pipeline.py",
+  "cleaner_sha256": "676e9d9a2b6f6395f6400d8e62f488793da6d11ff2a16a77589d3e89e007b81b",
+  "strategies_applied": [
+    "1-boilerplate",
+    "2-normalisation",
+    "3-ghost-tags",
+    "4-language-id",
+    "5-quality(heuristic+verifier)",
+    "6-dedup(exact+rollout+minhash-lsh)",
+    "7-pii",
+    "8-decontamination",
+    "9-manifest"
+  ]
+}

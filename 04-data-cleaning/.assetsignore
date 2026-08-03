@@ -1,0 +1,6 @@
+data/
+scripts/
+data.js.tmp
+requirements.txt
+README.md
+.DS_Store
