@@ -30,6 +30,10 @@ node_modules/
 .coverage.*
 htmlcov/
 
+# Large local Assignment 4 source and cleaned artifacts
+04-data-cleaning/data/*.jsonl
+04-data-cleaning/data/clean/*.jsonl.gz
+
 # Local environment files
 .env
 .env.*
