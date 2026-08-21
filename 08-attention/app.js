@@ -98,8 +98,17 @@
     }
   }
 
-  document.querySelectorAll("canvas.attn").forEach(draw);
+  // Canvas pattern drawing
+  document.querySelectorAll(".viz canvas, canvas.attn").forEach((canvas) => {
+    if (!canvas.dataset.pattern) {
+      // derive from id if not present (e.g. cv-mha -> mha)
+      const id = canvas.id.replace(/^cv-/, "");
+      if (patterns[id]) canvas.dataset.pattern = id;
+    }
+    draw(canvas);
+  });
 
+  // Sidebar link spy
   const links = [...document.querySelectorAll(".rail a")];
   const mechs = [...document.querySelectorAll(".mech")];
   const io = new IntersectionObserver(
@@ -113,20 +122,42 @@
   );
   mechs.forEach((m) => io.observe(m));
 
+  // Category filter buttons
   const buttons = document.querySelectorAll(".filters button");
   buttons.forEach((btn) => {
     btn.addEventListener("click", () => {
-      const era = btn.dataset.era;
+      const filterEra = btn.dataset.filter || btn.dataset.era;
       buttons.forEach((b) => b.setAttribute("aria-pressed", String(b === btn)));
       mechs.forEach((m) => {
-        if (era === "all") m.classList.remove("hidden");
-        else m.classList.toggle("hidden", m.dataset.era !== era);
+        if (filterEra === "all") m.classList.remove("hidden");
+        else m.classList.toggle("hidden", m.dataset.era !== filterEra);
       });
       links.forEach((a) => {
         const target = document.querySelector(a.getAttribute("href"));
         if (!target) return;
-        a.style.display = era === "all" || target.dataset.era === era ? "" : "none";
+        a.style.display = filterEra === "all" || target.dataset.era === filterEra ? "" : "none";
       });
     });
   });
+
+  // KaTeX Auto-render
+  function initKaTeX() {
+    if (typeof renderMathInElement === "function") {
+      renderMathInElement(document.body, {
+        delimiters: [
+          { left: "$$", right: "$$", display: true },
+          { left: "\\[", right: "\\]", display: true },
+          { left: "$", right: "$", display: false },
+          { left: "\\(", right: "\\)", display: false }
+        ],
+        throwOnError: false
+      });
+    }
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initKaTeX);
+  } else {
+    initKaTeX();
+  }
 })();
