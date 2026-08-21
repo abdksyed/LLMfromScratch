@@ -11,6 +11,7 @@ Current mapping:
 | `02-bpe/` | `deployments/bpe/` | `https://syedak.com/bpe/` |
 | `03-india-40b-design/` | `deployments/india-40b-design/` | `https://syedak.com/india-40b-design/` |
 | `04-data-cleaning/` | `deployments/data-cleaning/` | `https://syedak.com/data-cleaning/` |
+| `08-attention/` | `deployments/attention/` | `https://syedak.com/attention/` |
 
 Deploy one project:
 
