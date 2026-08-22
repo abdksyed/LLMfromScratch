@@ -1,0 +1,38 @@
+[PASS] tokenizer_hash_verified
+shards created
+manifests validated
+evaluation data blocked
+[PASS] eval_shard_blocked
+mixture compiled
+loading Qwen/Qwen3-0.6B-Base on mps
+trainable parameters: 15730944
+batches packed
+batch 0 stage=foundation loss=4.0201 loss_tokens=244 util=1.000 hash=768f4aef7d2d
+batch 1 stage=foundation loss=5.4136 loss_tokens=242 util=1.000 hash=a64493341cb3
+batch 2 stage=foundation loss=5.0587 loss_tokens=231 util=1.000 hash=2266073decba
+checkpoint saved
+[PASS] checkpoint_saved
+batch 3 stage=foundation loss=5.0002 loss_tokens=241 util=1.000 hash=6ca2f128a0a0
+batch 4 stage=foundation loss=5.2195 loss_tokens=241 util=1.000 hash=e4444349d2bc
+batch 5 stage=foundation loss=4.2443 loss_tokens=241 util=1.000 hash=e340412b5919
+OPUS decisions recorded
+checkpoint saved
+[PASS] checkpoint_saved
+crash simulated
+restored ckpt-006 next_batch_id=6
+run resumed
+[PASS] resume_next_batch_matched
+batch 6 stage=capability loss=4.5493 loss_tokens=244 util=1.000 hash=cb081e300603
+batch 7 stage=capability loss=4.9538 loss_tokens=230 util=1.000 hash=bae21a888344
+batch 8 stage=capability loss=5.5331 loss_tokens=240 util=1.000 hash=75e86286cd52
+batch 9 stage=capability loss=4.4479 loss_tokens=242 util=1.000 hash=d74c24bd17a2
+batch 10 stage=capability loss=4.9380 loss_tokens=242 util=1.000 hash=a8e44c005f59
+batch 11 stage=capability loss=4.6858 loss_tokens=230 util=1.000 hash=b45097662a67
+historical stream replayed
+[PASS] replay_hash_matched
+restored ckpt-003 next_batch_id=3
+batch 3 stage=foundation loss=4.3027 loss_tokens=244 util=1.000 hash=f658e4fbf143
+batch 4 stage=foundation loss=5.1227 loss_tokens=242 util=1.000 hash=3e6ebaf0ceea
+branch forked
+performance measured
+audit completed
