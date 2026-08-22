@@ -1,0 +1,166 @@
+{
+  "tokenizer_integrity": {
+    "result": "PASS",
+    "evidence": "manifests/tokenizer.json",
+    "tokenizer_hash": "b15e1237b7e50d912889d71dc3756990aec6bf4cc10132f502fe8df74b754522"
+  },
+  "evaluation_firewall": {
+    "result": "PASS",
+    "evidence": "ledgers/firewall.json",
+    "blocked": [
+      {
+        "shard_id": "eval-agentic-000",
+        "split": "eval",
+        "lane": "agentic",
+        "purpose": "train"
+      },
+      {
+        "shard_id": "eval-code-000",
+        "split": "eval",
+        "lane": "code",
+        "purpose": "train"
+      },
+      {
+        "shard_id": "eval-general-000",
+        "split": "eval",
+        "lane": "general",
+        "purpose": "train"
+      },
+      {
+        "shard_id": "eval-indic-000",
+        "split": "eval",
+        "lane": "indic",
+        "purpose": "train"
+      },
+      {
+        "shard_id": "eval-long-000",
+        "split": "eval",
+        "lane": "long",
+        "purpose": "train"
+      },
+      {
+        "shard_id": "eval-reasoning-000",
+        "split": "eval",
+        "lane": "reasoning",
+        "purpose": "train"
+      },
+      {
+        "shard_id": "valid-agentic-000",
+        "split": "valid",
+        "lane": "agentic",
+        "purpose": "train"
+      },
+      {
+        "shard_id": "valid-code-000",
+        "split": "valid",
+        "lane": "code",
+        "purpose": "train"
+      }
+    ]
+  },
+  "packing_correctness": {
+    "result": "PASS",
+    "evidence": "manifests/packing_report.json",
+    "issues": []
+  },
+  "mixture_compliance": {
+    "result": "PASS",
+    "evidence": "manifests/mixture.json",
+    "planned_tokens": {
+      "general": 894,
+      "code": 738,
+      "agentic": 348,
+      "reasoning": 414,
+      "long": 120,
+      "indic": 558
+    },
+    "actual_tokens": {
+      "general": 894,
+      "code": 738,
+      "agentic": 348,
+      "reasoning": 414,
+      "long": 120,
+      "indic": 558
+    },
+    "planned_share": {
+      "general": 0.291015625,
+      "code": 0.240234375,
+      "agentic": 0.11328125,
+      "reasoning": 0.134765625,
+      "long": 0.0390625,
+      "indic": 0.181640625
+    },
+    "actual_share": {
+      "general": 0.291015625,
+      "code": 0.240234375,
+      "agentic": 0.11328125,
+      "reasoning": 0.134765625,
+      "long": 0.0390625,
+      "indic": 0.181640625
+    },
+    "floors_met_every_batch": true,
+    "n_batches": 12
+  },
+  "opus_audit_trail": {
+    "result": "PASS",
+    "evidence": "ledgers/opus.jsonl",
+    "counts": {
+      "accept": 29,
+      "defer": 144,
+      "floor_override": 6,
+      "reject": 12
+    }
+  },
+  "crash_recovery": {
+    "result": "PASS",
+    "evidence": "checkpoints/resume.json",
+    "expected_batch_id": 6,
+    "resumed_batch_id": 6,
+    "expected_hash": "cb081e3006038499699f6160b7592b18217696319371682cf6d4c099444dca4e",
+    "resumed_hash": "cb081e3006038499699f6160b7592b18217696319371682cf6d4c099444dca4e"
+  },
+  "replay": {
+    "result": "PASS",
+    "evidence": "ledgers/replay.json",
+    "matches": [
+      {
+        "batch_id": 1,
+        "original_hash": "a64493341cb3042b20fd78556a54c356d5b61b10c1c0d1f76c73143d8093fe65",
+        "replay_hash": "a64493341cb3042b20fd78556a54c356d5b61b10c1c0d1f76c73143d8093fe65",
+        "matched": true
+      },
+      {
+        "batch_id": 2,
+        "original_hash": "2266073decbac2c19f83792412f8a087e4408e9f0bebe5dab7480043ebb728e3",
+        "replay_hash": "2266073decbac2c19f83792412f8a087e4408e9f0bebe5dab7480043ebb728e3",
+        "matched": true
+      },
+      {
+        "batch_id": 3,
+        "original_hash": "6ca2f128a0a0738f1abb9c270c7a0677dc4440ba457567c197b3473e8716a444",
+        "replay_hash": "6ca2f128a0a0738f1abb9c270c7a0677dc4440ba457567c197b3473e8716a444",
+        "matched": true
+      }
+    ]
+  },
+  "learning_trace": {
+    "result": "PASS",
+    "evidence": "ledgers/learning.jsonl"
+  },
+  "throughput": {
+    "result": "PASS",
+    "evidence": "performance.json",
+    "steps": 12,
+    "train_seconds": 5.7903812495060265,
+    "packing_utilization": 1.0,
+    "loss_bearing_fraction": 0.93359375,
+    "loss_bearing_tokens": 2868,
+    "loss_bearing_tokens_per_second": 495.3041736664001,
+    "seq_len": 256,
+    "batch_size": 1
+  },
+  "fork": {
+    "result": "PASS",
+    "evidence": "ledgers/fork.json"
+  }
+}

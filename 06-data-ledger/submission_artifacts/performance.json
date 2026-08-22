@@ -1,0 +1,10 @@
+{
+  "steps": 12,
+  "train_seconds": 5.7903812495060265,
+  "packing_utilization": 1.0,
+  "loss_bearing_fraction": 0.93359375,
+  "loss_bearing_tokens": 2868,
+  "loss_bearing_tokens_per_second": 495.3041736664001,
+  "seq_len": 256,
+  "batch_size": 1
+}
